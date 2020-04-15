@@ -1,0 +1,15 @@
+<div #mapViewNode style="height:100%;width:100%;position:relative"></div>
+<app-table-row *ngIf="ELEMENT_DATA.length" [ELEMENT_DATA]="ELEMENT_DATA" [FieldData]="FieldData">
+</app-table-row>
+
+<div class="container" class="search">
+  <input type="text" placeholder="Search" id="textValue">
+  <button type="submit" class="closebtn" (click)="closeData()">
+    <i class="fa fa-close"></i>
+  </button>
+  <button type="submit" class="searchButton" (click)="filterData()" id="search-bar">
+    <i class="fa fa-search"></i>
+  </button>
+</div>
+
+<router-outlet>

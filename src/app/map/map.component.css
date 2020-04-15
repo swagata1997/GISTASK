@@ -1,0 +1,14 @@
+.search{
+    top:0;
+    right:0;
+    position:absolute;
+}
+/*.close{
+    height:20px;
+    width:20px;
+    top:0;
+}*/
+.closebtn{
+    background-color:white;
+   
+}
