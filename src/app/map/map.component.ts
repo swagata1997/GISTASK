@@ -25,7 +25,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ELEMENT_DATA: any[] = [];
   FieldData: any[] = [];
   AttrData: any;
-  highlightSelect: any;
+
   attributeName = [];
   constructor(public sharedService: SharedService) {
 
@@ -77,34 +77,37 @@ export class MapComponent implements OnInit, OnDestroy {
           }
         });
       });
+      /**************************Highlight************************************ */
+      this.view.when().then(function () {
+        this.view.whenLayerView(featureLayer).then(function (layerView) {
+          let Highlight;
+          this.view.on("click", function (event) {
+            this.hitTest(event).then(function (event) {
+              let results = event.results.filter(function (result) {
+                return result.graphic.layer.FieldData;
+              });
+              let result = results[0];
+              Highlight && Highlight.remove();
+              if (result) {
+                featureLayer.graphic = result.graphic;
+                Highlight = layerView.highlight(result.graphic);
+              } else {
 
+              }
+            })
+          })
+        })
+      })
+      /***************************End Highlight******************************************/
     } catch (error) {
       console.log("EsriLoader: ", error);
     }
-    this.view.when(function () {
-      var stationLayer = this.featureLayer.layers.getItemAt(1);
-      this.view.whenLayerView(stationLayer).then(function (layerView) {
-        var queryStations = stationLayer.createQuery();
-        stationLayer.queryFeatures(queryStations).then(function (result) {
-          // if a feature is already highlighted, then remove the highlight
-          if (highlightSelect) {
-            highlightSelect.remove();
-          }
 
-          // the feature to be highlighted
-          var feature = result.features[0];
-
-          // use the objectID to highlight the feature
-          highlightSelect = layerView.highlight(
-            feature.attributes["OBJECTID"]
-          );
-        }
-    })
-    }//End Map
+  }//End Map
 
   getResults(response) {
-        this.ELEMENT_DATA = [];
-        for(var i = 0; i<response.fields.length; i++) {
+    this.ELEMENT_DATA = [];
+    for (var i = 0; i < response.fields.length; i++) {
       this.ELEMENT_DATA.push(response.fields[i].name)
       ELEMENT_DATA.push(response.fields[i].name);
     }
