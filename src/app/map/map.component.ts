@@ -3,6 +3,7 @@ import { loadModules } from "esri-loader";
 import { SharedService } from '../shared.service';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
 import { FormGroup, FormControl } from '@angular/forms';
+import { DataSource } from '@angular/cdk/table';
 
 export interface PeriodicElement {
   name: string;
@@ -13,7 +14,7 @@ export interface PeriodicElement {
 
 let ELEMENT_DATA: any[] = [];
 let FieldData: any[] = [];
-
+let pointFilter: any[] = [];
 
 @Component({
   selector: 'app-map',
@@ -30,13 +31,17 @@ export class MapComponent implements OnInit, OnDestroy {
   _qTask: any;
   ELEMENT_DATA: any[] = [];
   FieldData: any[] = [];
+  MapData: any[] = [];
+  pointData: any;
   FLayer: any;
   AttrData: any;
   filterName: string
   paginator: MatPaginator;
-
+  fieldName = 'x';
+  value = 'y';
   @Input() objectID: any[];
   @Input() objData: any[];
+
   testForm: FormGroup;
   attributeName = [];
   constructor(public sharedService: SharedService) {
@@ -48,9 +53,9 @@ export class MapComponent implements OnInit, OnDestroy {
 
     try {
       // Load the modules for the ArcGIS API for JavaScript
-      const [Map, MapView, FeatureLayer] =
+      const [Map, MapView, FeatureLayer, Field, lang] =
         await loadModules(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/tasks/QueryTask",
-          "esri/tasks/support/Query"]);
+          "esri/tasks/support/Query", "dojo/_base/lang", "dojo/on", "esri/layers/support/Field",]);
 
       // Configure the Map
       const mapProperties = {
@@ -76,25 +81,33 @@ export class MapComponent implements OnInit, OnDestroy {
         listMode: "hide"
       });
 
+      var tempObject = new Field({
+        alias: "Index",
+        name: "Index",
+        type: "esriFieldTypeInteger"
+      });
+
+      /* this._map.on("layer-add", lang.hitch(this, function (evt) {
+         featureLayer.fields.push(tempObject);
+         console.log(featureLayer);
+       }))*/
+
       this.newMethod(featureLayer);
       this.view.whenLayerView(featureLayer).then(layerView => {
-        console.log(layerView);
-        // 
+        //console.log(layerView);
+
         layerView.watch("updating", val => {
           if (!val) {
-            // layerView.visible = false;
-            // console.log(val);
+
             // wait for the layer view to finish updating
             layerView.queryFeatures({
               outFields: layerView.availableFields
             }).then(results => {
-              this.getPagingData(featureLayer)
-              //featureLayer.setVisibleLayers([13875])
-              console.log(results);
+
               this.getResults(results);
-              featureLayer.setVisibleLayers([11846]);
-              layerView.visible = true;
+
               return results;
+
             });
           }
         });
@@ -103,23 +116,35 @@ export class MapComponent implements OnInit, OnDestroy {
       /**************************Highlight Point************************************ */
       const newView = this.view;
       this.view.whenLayerView(featureLayer).then(function (layerView) {
+        // this.getResultsData();
         let highlight;
         newView.on("click", function (event) {
+
           newView.hitTest(event.screenPoint).then(function (event) {
+
             var graphics = event.results;
             const result = graphics[0].graphic;
+            console.log(result);
             if (highlight) {
               highlight.remove();
-            } console.log(result);
-            if (result) {
-              highlight = layerView.highlight(result);
-              this.view.goTo(featureLayer.fullExtent);
-
             }
+            highlight = layerView.highlight(result);
+            // this.MapData.push(result.attributes.OBJECTID)
+            console.log("ss");
+            //highlight = layerView.highlight(result);
+            // const objIds = result.attributes.OBJECTID;
+            // this.sharedService.selectedRow = this.objIds;
+            this.selectedRow.highlight(this.objIds);
+            this.sharedService.pointData.next(this.objIds);
+
           });
         });
       });
 
+
+      function getResultsData() {
+        console.log("fdsf");
+      }
       /***************************End Highlight******************************************/
     } catch (error) {
       console.log("EsriLoader: ", error);
@@ -128,16 +153,16 @@ export class MapComponent implements OnInit, OnDestroy {
   }//End Map
 
   /*******************Get Map Record********** */
-  getData(response) {
-    console.log(response);
-    this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
-    this.sharedService.FieldData.next(this.FieldData);
-    return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
+
+
+  getResultsData() {
+    console.log("woo");
   }
 
+  /**************Get all first page data *****************/
   getPagingData(layer) {
     this.sharedService.objData.subscribe(elementData => {
-      console.log(elementData);
+      // console.log(elementData);
       let query = '';
 
       for (var i = 0; i < elementData.length; i++) {
@@ -145,18 +170,13 @@ export class MapComponent implements OnInit, OnDestroy {
       }
 
       const arrData = query.substring(0, query.length - 1);
-      // return arrData;
-      //feature.setVisibleLayers([13875]);
 
-      // console.log(arrData);
-      // featureLayer.definitionExpression = ("OBJECTID IN ('" + strs + "')");*/
-      // const strs = '13875','9747';
-      // console.log(layer.definitionExpression = ('OBJECTID IN (' + arrData + ')'));
-      //layer.definitionExpression = ('OBJECTID IN ("13875")');
 
     });
   }
 
+
+  /***********************END****************** */
   getResults(response) {
     this.ELEMENT_DATA = [];
     for (var i = 0; i < response.fields.length; i++) {
@@ -170,10 +190,11 @@ export class MapComponent implements OnInit, OnDestroy {
     })
     this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
     this.sharedService.FieldData.next(this.FieldData);
-    console.log(ELEMENT_DATA);
+    //console.log(ELEMENT_DATA);
     return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
   }
   /***********************END****************** */
+
   filterData() {
     const propertyLayer = this.view.map.layers.find((layer) => { return layer.id === 'properties' })
 
@@ -201,10 +222,9 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   private newMethod(featureLayer: any) {
-    console.log(featureLayer);
+    // console.log(featureLayer);
     this._map.add(featureLayer);
-    //
-    //featureLayer.hide();
+
   };
 
   ngOnInit() {
@@ -212,7 +232,7 @@ export class MapComponent implements OnInit, OnDestroy {
     this.initializeMap();
     this.ELEMENT_DATA = ELEMENT_DATA;
     this.FieldData = FieldData;
-    console.log(FieldData);
+    // console.log(FieldData);
 
     /**********On Table click highlight Feature Layer**** */
     this.sharedService.objectID.subscribe(elementData => {
@@ -222,12 +242,12 @@ export class MapComponent implements OnInit, OnDestroy {
       if (this.objectID) {
         const propertyLayer = this.view.map.layers.find((layer) => { return layer.id === 'properties' });
         this.view.whenLayerView(propertyLayer).then(function (layerView) {
-          console.log(highlight);
+          //  console.log(highlight);
           if (highlight) {
             highlight.remove();
           }
           highlight = layerView.highlight(objectID);
-          console.log(highlight);
+          // console.log(highlight);
         })
       }
 
