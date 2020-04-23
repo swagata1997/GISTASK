@@ -9,16 +9,11 @@ export class SharedService {
   serviceData: any;
   ELEMENT_DATA = new Subject<Array<any>>();
   FieldData = new Subject<Array<any>>();
+  objectID = new Subject<Array<any>>();
+  objData = new Subject<Array<any>>();
+  pointData = new Subject<Array<any>>();
+  SelectedRow = '9415';
   constructor(private http: HttpClient) { }
-
-  /* getData(){
-    return  this.http.get('https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/Landscape_Trees/FeatureServer/0')
-    .subscribe((data)=>{
-      this.serviceData = data.json();
-      console.log(this.serviceData);
-    })
-   }*/
-
 
 }
 
