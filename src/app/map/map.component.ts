@@ -27,6 +27,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   view: any;
   _map: any;
+  layerId: string;
   _params: any;
   _qTask: any;
   ELEMENT_DATA: any[] = [];
@@ -53,9 +54,9 @@ export class MapComponent implements OnInit, OnDestroy {
 
     try {
       // Load the modules for the ArcGIS API for JavaScript
-      const [Map, MapView, FeatureLayer, Field, lang] =
+      const [Map, MapView, FeatureLayer, QueryTask, Query, Graphic, GraphicsLayer] =
         await loadModules(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/tasks/QueryTask",
-          "esri/tasks/support/Query", "dojo/_base/lang", "dojo/on", "esri/layers/support/Field",]);
+          "esri/tasks/support/Query", "esri/Graphic", "esri/layers/GraphicsLayer"]);
 
       // Configure the Map
       const mapProperties = {
@@ -73,47 +74,57 @@ export class MapComponent implements OnInit, OnDestroy {
       };
 
       this.view = new MapView(mapViewProperties);
+      const queryTask = {
+        url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0"
+      }
+      this._qTask = new QueryTask(queryTask)
+      const QueryFeature = {
+        returnGeometry: true,
+        outFields: ["*"]
+      }
+      this._params = new Query(QueryFeature);
 
-      const featureLayer = new FeatureLayer({
-        url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0",
-        outFields: ['*'],
-        id: 'properties',
-        listMode: "hide"
+      /* const featureLayer = new FeatureLayer({
+         url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0",
+         outFields: ['*'],
+         id: 'properties',
+         listMode: "hide"
+       });
+       this.newMethod(featureLayer);*/
+      var markerSymbol = {
+        type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+        color: [226, 119, 40],
+        outline: {
+          // autocasts as new SimpleLineSymbol()
+          color: [255, 255, 255],
+          width: 2
+        }
+      };
+      var graphic = new Graphic({
+        // geometry: point,
+        symbol: markerSymbol
+      });
+      var layer = new GraphicsLayer({
+        graphics: [FieldData]
+      });
+      layer.add(graphic);
+      this._map.add(layer);
+
+      var peaksUrl = " url:https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0";
+      var qTask = new QueryTask({
+        url: peaksUrl
       });
 
-      var tempObject = new Field({
-        alias: "Index",
-        name: "Index",
-        type: "esriFieldTypeInteger"
+      var _params = new Query({
+        returnGeometry: true,
+        outFields: ["*"]
       });
+      _params.where = '1=1';
 
-      /* this._map.on("layer-add", lang.hitch(this, function (evt) {
-         featureLayer.fields.push(tempObject);
-         console.log(featureLayer);
-       }))*/
+      qTask.execute(_params).then(getResults)
+        .catch(promiseRejected);
 
-      this.newMethod(featureLayer);
-      this.view.whenLayerView(featureLayer).then(layerView => {
-        //console.log(layerView);
-
-        layerView.watch("updating", val => {
-          if (!val) {
-
-            // wait for the layer view to finish updating
-            layerView.queryFeatures({
-              outFields: layerView.availableFields
-            }).then(results => {
-
-              this.getResults(results);
-
-              return results;
-
-            });
-          }
-        });
-      });
-
-      /**************************Highlight Point************************************ */
+      /**************************Highlight Point************************************ 
       const newView = this.view;
       this.view.whenLayerView(featureLayer).then(function (layerView) {
         // this.getResultsData();
@@ -142,23 +153,41 @@ export class MapComponent implements OnInit, OnDestroy {
       });
 
 
-      function getResultsData() {
-        console.log("fdsf");
-      }
       /***************************End Highlight******************************************/
+
     } catch (error) {
       console.log("EsriLoader: ", error);
     }
+    function getResults(response) {
+      this.ELEMENT_DATA = [];
+      for (var i = 0; i < response.fields.length; i++) {
+        this.ELEMENT_DATA.push(response.fields[i].name)
+        ELEMENT_DATA.push(response.fields[i].name);
+      }
+      this.FieldData = [];
+      response.features.forEach(value => {
+        this.FieldData.push(value.attributes);
+        FieldData.push(value.attributes);
+        this.view.whenLayerView(layer).then(function (graphic) {
+          graphic.push.FieldData;
+          return graphic;
+        })
+      })
+      this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
+      this.sharedService.FieldData.next(this.FieldData);
+      //console.log(ELEMENT_DATA);
+      return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
+    }
+    /***********************END****************** */
+    function promiseRejected(error) {
+      console.error("Promise rejected: ", error.message);
+
+    }
+
 
   }//End Map
 
   /*******************Get Map Record********** */
-
-
-  getResultsData() {
-    console.log("woo");
-  }
-
   /**************Get all first page data *****************/
   getPagingData(layer) {
     this.sharedService.objData.subscribe(elementData => {
@@ -174,27 +203,28 @@ export class MapComponent implements OnInit, OnDestroy {
 
     });
   }
-
-
   /***********************END****************** */
-  getResults(response) {
-    this.ELEMENT_DATA = [];
-    for (var i = 0; i < response.fields.length; i++) {
-      this.ELEMENT_DATA.push(response.fields[i].name)
-      ELEMENT_DATA.push(response.fields[i].name);
-    }
-    this.FieldData = [];
-    response.features.forEach(value => {
-      this.FieldData.push(value.attributes);
-      FieldData.push(value.attributes);
-    })
-    this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
-    this.sharedService.FieldData.next(this.FieldData);
-    //console.log(ELEMENT_DATA);
-    return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
-  }
-  /***********************END****************** */
+  /* getResults(response) {
+     this.ELEMENT_DATA = [];
+     for (var i = 0; i < response.fields.length; i++) {
+       this.ELEMENT_DATA.push(response.fields[i].name)
+       ELEMENT_DATA.push(response.fields[i].name);
+     }
+     this.FieldData = [];
+     response.features.forEach(value => {
+       this.FieldData.push(value.attributes);
+       FieldData.push(value.attributes);
+     })
+     this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
+     this.sharedService.FieldData.next(this.FieldData);
+     //console.log(ELEMENT_DATA);
+     return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
+   }
+   /***********************END****************** */
+  /*promiseRejected(error) {
+    console.error("Promise rejected: ", error.message);
 
+  }*/
   filterData() {
     const propertyLayer = this.view.map.layers.find((layer) => { return layer.id === 'properties' })
 
@@ -221,11 +251,10 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  private newMethod(featureLayer: any) {
-    // console.log(featureLayer);
-    this._map.add(featureLayer);
+  /*private newMethod(featureLayer: any) {
 
-  };
+    this._map.add(featureLayer);
+  };*/
 
   ngOnInit() {
 
