@@ -3,7 +3,7 @@ import { loadModules } from "esri-loader";
 import { SharedService } from '../shared.service';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
 import { FormGroup, FormControl } from '@angular/forms';
-import { DataSource } from '@angular/cdk/table';
+//import { DataSource } from '@angular/cdk/table';
 
 export interface PeriodicElement {
   name: string;
@@ -14,7 +14,7 @@ export interface PeriodicElement {
 
 let ELEMENT_DATA: any[] = [];
 let FieldData: any[] = [];
-let pointFilter: any[] = [];
+let geometry: any[] = [];
 
 @Component({
   selector: 'app-map',
@@ -32,14 +32,17 @@ export class MapComponent implements OnInit, OnDestroy {
   _qTask: any;
   ELEMENT_DATA: any[] = [];
   FieldData: any[] = [];
+  geometry:any[] = [];
   MapData: any[] = [];
   pointData: any;
   FLayer: any;
   AttrData: any;
   filterName: string
   paginator: MatPaginator;
-  fieldName = 'x';
-  value = 'y';
+ //fieldName = 'x';
+ // value = 'y';
+  lat:any;
+  log:any;
   @Input() objectID: any[];
   @Input() objData: any[];
 
@@ -84,13 +87,9 @@ export class MapComponent implements OnInit, OnDestroy {
       }
       this._params = new Query(QueryFeature);
 
-      /* const featureLayer = new FeatureLayer({
-         url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0",
-         outFields: ['*'],
-         id: 'properties',
-         listMode: "hide"
-       });
-       this.newMethod(featureLayer);*/
+      for(var i=0;i<FieldData.length;i++){
+       var lat = FieldData[i].MAP_LATITUDE;
+       var log = FieldData[i].MAP_LONGITUDE;
       var markerSymbol = {
         type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
         color: [226, 119, 40],
@@ -100,19 +99,26 @@ export class MapComponent implements OnInit, OnDestroy {
           width: 2
         }
       };
-      var graphic = new Graphic({
-        // geometry: point,
+      var point = {
+        type: "point",
+        longitude:lat,
+        latitude: log
+      }
+     var graphic = new Graphic({
+        geometry: point,
         symbol: markerSymbol
-      });
-      var layer = new GraphicsLayer({
-        graphics: [FieldData]
+
+     });
+    var layer = new GraphicsLayer({
+       
       });
       layer.add(graphic);
+    }
       this._map.add(layer);
 
-      var peaksUrl = " url:https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0";
+     
       var qTask = new QueryTask({
-        url: peaksUrl
+        url:"https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0"
       });
 
       var _params = new Query({
@@ -124,59 +130,38 @@ export class MapComponent implements OnInit, OnDestroy {
       qTask.execute(_params).then(getResults)
         .catch(promiseRejected);
 
-      /**************************Highlight Point************************************ 
-      const newView = this.view;
-      this.view.whenLayerView(featureLayer).then(function (layerView) {
-        // this.getResultsData();
-        let highlight;
-        newView.on("click", function (event) {
-
-          newView.hitTest(event.screenPoint).then(function (event) {
-
-            var graphics = event.results;
-            const result = graphics[0].graphic;
-            console.log(result);
-            if (highlight) {
-              highlight.remove();
-            }
-            highlight = layerView.highlight(result);
-            // this.MapData.push(result.attributes.OBJECTID)
-            console.log("ss");
-            //highlight = layerView.highlight(result);
-            // const objIds = result.attributes.OBJECTID;
-            // this.sharedService.selectedRow = this.objIds;
-            this.selectedRow.highlight(this.objIds);
-            this.sharedService.pointData.next(this.objIds);
-
-          });
-        });
-      });
-
-
-      /***************************End Highlight******************************************/
+     console.log(ELEMENT_DATA);
+     console.log(FieldData);
 
     } catch (error) {
       console.log("EsriLoader: ", error);
     }
     function getResults(response) {
-      this.ELEMENT_DATA = [];
+      
       for (var i = 0; i < response.fields.length; i++) {
-        this.ELEMENT_DATA.push(response.fields[i].name)
-        ELEMENT_DATA.push(response.fields[i].name);
+        //console.log(response.fields[i].name);
+          ELEMENT_DATA.push(response.fields[i].name);
+         
+         
       }
-      this.FieldData = [];
+      var symbol; var geometry;
       response.features.forEach(value => {
-        this.FieldData.push(value.attributes);
+        
         FieldData.push(value.attributes);
-        this.view.whenLayerView(layer).then(function (graphic) {
-          graphic.push.FieldData;
-          return graphic;
-        })
-      })
+        //console.log(FieldData.length);
+       /* var lat = value.geometry.latitude;
+        var log = value.geometry.longitude;
+        if( value.geometry.type==="point"){
+          symbol=  markerSymbol;
+          geometry.push(value.geometry);
+         // return geometry;
+        }*/
+       // this._map.graphics.add(new Graphic(value.geometry, symbol));
+    })
       this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
       this.sharedService.FieldData.next(this.FieldData);
       //console.log(ELEMENT_DATA);
-      return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
+      return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData,geometry };
     }
     /***********************END****************** */
     function promiseRejected(error) {
