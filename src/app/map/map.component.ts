@@ -13,6 +13,7 @@ export interface PeriodicElement {
 const ELEMENT_DATA: any[] = [];
 const FieldData: any[] = [];
 const graphicArray: any[] = [];
+const res: any[] = [];
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -46,7 +47,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   testForm: FormGroup;
   attributeName = [];
-  constructor(public sharedService: SharedService) {
+   constructor(public sharedService: SharedService) {
 
   }
 
@@ -69,7 +70,7 @@ export class MapComponent implements OnInit, OnDestroy {
       // Initialize the MapView
       const mapViewProperties = {
         container: this.mapViewEl.nativeElement,
-        center: [-82.44384, 35.61318],
+       center: [-82.44384, 35.61318],
         zoom: 8,
         map: this._map
       };
@@ -83,11 +84,10 @@ export class MapComponent implements OnInit, OnDestroy {
         returnGeometry: true,
         outFields: ['*']
       };
+      console.log('1');
+      console.log(this.view);
       this._params = new Query(QueryFeature);
-      console.log(FieldData);
-      // tslint:disable-next-line:prefer-for-of
-
-
+         // tslint:disable-next-line:prefer-for-of
 
 
       const qTask = new QueryTask({
@@ -100,14 +100,18 @@ export class MapComponent implements OnInit, OnDestroy {
         outFields: ['*']
       });
       _params.where = '1=1';
-
-      qTask.execute(_params).then(getResults)
-        .catch(promiseRejected);
+     // const res: any;
+      qTask.execute(_params).then(this.getResults)
+        .catch(this.promiseRejected);
       // tslint:disable-next-line:prefer-for-of
-      setTimeout(function() {
+
+      console.log('2');
+      console.log(this.view);
+      const viewNew = this.view;
+      // tslint:disable-next-line:only-arrow-functions
+      setTimeout(() => {
      // tslint:disable-next-line:prefer-for-of
      for (let i = 0; i < FieldData.length; i++) {
-          console.log(this._map);
           const lat = FieldData[i].MAP_LATITUDE;
           const log = FieldData[i].MAP_LONGITUDE;
           const markerSymbol = {
@@ -131,81 +135,52 @@ export class MapComponent implements OnInit, OnDestroy {
 
           graphicArray.push(graphic);
 
-       } }, 3000);
-      const layer = new GraphicsLayer({
-             graphics: [graphicArray]
-           });
-      this._map.add(layer);
-     //  console.log(layer);
-
-    } catch (error) {
+       // tslint:disable-next-line:align
+       }
+     const layer = new GraphicsLayer({
+              graphics: [graphicArray]
+            });
+     viewNew.map.add(layer);
+    }, 3000);
+   } catch (error) {
       console.log('EsriLoader: ', error);
     }
-    function getResults(response) {
-      // tslint:disable-next-line:prefer-for-of
-      for (let i = 0; i < response.fields.length; i++) {
-        ELEMENT_DATA.push(response.fields[i].name);
-         }
-      response.features.forEach(value => {
-
-        FieldData.push(value.attributes);
-
-    });
-      // this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
-      // this.sharedService.FieldData.next(this.FieldData);
-     // console.log(ELEMENT_DATA);
-      // console.log(FieldData);
-      return { ELEMENT_DATA, FieldData};
-      }
    /***********************END****************** */
-    function promiseRejected(error) {
+  }// End Map
+
+  /*******************Get Map Record********** */
+    getResults = (response: any) => {
+    // tslint:disable-next-line:prefer-for-of
+    for (let i = 0; i < response.fields.length; i++) {
+      ELEMENT_DATA.push(response.fields[i].name);
+       }
+    response.features.forEach(value => {
+
+      FieldData.push(value.attributes);
+
+  });
+    // this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
+    // this.sharedService.FieldData.next(this.FieldData);
+    return { ELEMENT_DATA, FieldData};
+    }
+     promiseRejected = (error) => {
       console.error('Promise rejected: ', error.message);
 
     }
 
-
-  }// End Map
-
-  /*******************Get Map Record********** */
   /**************Get all first page data *****************/
-  getPagingData(layer) {
+  getPagingData = (layer: any) => {
     this.sharedService.objData.subscribe(elementData => {
-      // console.log(elementData);
       let query = '';
-
       // tslint:disable-next-line:prefer-for-of
       for (let i = 0; i < elementData.length; i++) {
         query += '"' + elementData[i].OBJECTID + '",';
       }
-
       const arrData = query.substring(0, query.length - 1);
-
-
     });
   }
   /***********************END****************** */
-  /* getResults(response) {
-     this.ELEMENT_DATA = [];
-     for (var i = 0; i < response.fields.length; i++) {
-       this.ELEMENT_DATA.push(response.fields[i].name)
-       ELEMENT_DATA.push(response.fields[i].name);
-     }
-     this.FieldData = [];
-     response.features.forEach(value => {
-       this.FieldData.push(value.attributes);
-       FieldData.push(value.attributes);
-     })
-     this.sharedService.ELEMENT_DATA.next(this.ELEMENT_DATA);
-     this.sharedService.FieldData.next(this.FieldData);
-     //console.log(ELEMENT_DATA);
-     return { ELEMENT_DATA: ELEMENT_DATA, FieldData: FieldData };
-   }
-   /***********************END****************** */
-  /*promiseRejected(error) {
-    console.error("Promise rejected: ", error.message);
-
-  }*/
- /* filterData() {
+   /* filterData = () => {
     const propertyLayer = this.view.map.layers.find((layer) => { return layer.id === 'properties' })
 
     const str = (<HTMLInputElement>document.getElementById("textValue")).value;
@@ -218,7 +193,7 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  closeData() {
+  closeData= () => {
     const propertyLayer = this.view.map.layers.find((layer) => { return layer.id === 'properties' })
     let str = (<HTMLInputElement>document.getElementById("textValue")).value;
     if (str) {
@@ -229,12 +204,7 @@ export class MapComponent implements OnInit, OnDestroy {
     else {
       propertyLayer.definitionExpression = `ADDRESS like '%` + str + `%'`;
     }
-  }
-
-  /*private newMethod(featureLayer: any) {
-
-    this._map.add(featureLayer);
-  };*/
+  }*/
 
   ngOnInit() {
 
