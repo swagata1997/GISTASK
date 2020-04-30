@@ -10,9 +10,6 @@
     <tr mat-header-row *matHeaderRowDef="ELEMENT_DATA"></tr>
     <tr mat-row *matRowDef="let row;  columns:ELEMENT_DATA ;" (click)=" cellClicked(row) " [ngClass]="{highlight:SelectedRow == row.OBJECTID}"></tr>
   </table>
-  <!--<mat-paginator #paginatorPos [pageSize]="5" [pageSizeOptions]="[5]" showFirstLastButtons>
-
-  </mat-paginator>-->
-  <mat-paginator #paginatorPos [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" [showFirstLastButtons]="true">
+  <mat-paginator #paginatorPos [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" (page)="pageEvent = pagedata($event)" [showFirstLastButtons]="true">
   </mat-paginator>
 </div>
