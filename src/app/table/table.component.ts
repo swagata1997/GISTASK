@@ -18,34 +18,34 @@ export class TableComponent implements OnInit, AfterViewInit {
   objectID: any;
   objDatas: any[] = [];
   @Input() pointData: any;
+  @Input() pointObjectId: any;
   SelectedRow: any;
   dataSource = new MatTableDataSource<any>();
 
 
   constructor(public sharedService: SharedService) { }
   cellClicked(row) {
-    console.log(row);
-    let val = 'OBJECTID'
+    const val = 'OBJECTID';
     this.sharedService.objectID.next(row.OBJECTID);
     this.SelectedRow = row[val];
 
   }
   isSorting(columnText: string): boolean {
-    console.log(columnText);
     return true;
   }
 
-  pagedata() {
+  pagedata = (event, pageIndex= 0) => {
+    let pageIndexId = pageIndex;
+    if (event !== '') {
+      pageIndexId = event.pageIndex;
+     }
 
     this.paginator.pageSize = 5;
-    const skip = this.paginator.pageSize * this.paginator.pageIndex;
+    const skip = this.paginator.pageSize * pageIndexId;
     const paged = this.FieldData.filter((u, i) => i >= skip)
       .filter((u, i) => i < this.paginator.pageSize);
-    this.objDatas.push(paged);
     this.sharedService.objData.next(paged);
-    //console.log(this.objDatas);
-
-  }
+     }
 
   ngOnInit() {
 
@@ -57,22 +57,20 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.sharedService.pointData.subscribe(filterData => {
       this.pointData = filterData;
     });
+    this.sharedService.pointObjectId.subscribe(pointObId => {
+      this.pointObjectId = pointObId;
+      this.SelectedRow = pointObId;
+     });
+
 
     this.sharedService.FieldData.subscribe(fieldData => {
       this.FieldData = JSON.parse(JSON.stringify(fieldData));
       this.dataSource = new MatTableDataSource(this.FieldData);
       this.dataSource.paginator = this.paginator;
     });
-
-
-
-
     this.FieldData = JSON.parse(JSON.stringify(this.FieldData));
 
-
-
-
-    /***************Map Data************* */
+   // Map Data
     this.dataSource = new MatTableDataSource(this.FieldData);
 
     setTimeout(() => {
@@ -81,11 +79,8 @@ export class TableComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator = this.paginator;
     });
 
-    this.pagedata();
-
-
-
-  }
+    this.pagedata('', this.paginator.pageIndex);
+}
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
