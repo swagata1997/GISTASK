@@ -8,3 +8,6 @@ table{
     color : black;
     letter-spacing: 1px;
 }
+.highlight {
+    background-color: aqua;
+}
