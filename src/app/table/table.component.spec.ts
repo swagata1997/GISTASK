@@ -1,15 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TableComponent } from './table.component';
-
+import { MatTableModule } from '@angular/material/table';
+import { SharedService } from '../shared.service';
+import {HttpClientModule} from '@angular/common/http';
 describe('TableComponent', () => {
   let component: TableComponent;
   let fixture: ComponentFixture<TableComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TableComponent ]
-    })
+      declarations: [ TableComponent ],
+      schemas: [NO_ERRORS_SCHEMA],
+      imports: [MatTableModule, HttpClientModule],
+      providers: [SharedService]
+     })
     .compileComponents();
   }));
 
@@ -22,4 +27,8 @@ describe('TableComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+  afterAll(() => {
+    TestBed.resetTestingModule();
+  });
+
 });
