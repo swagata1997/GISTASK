@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, ViewChild, ElementRef, Query } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { loadModules } from 'esri-loader';
 import { SharedService } from '../shared.service';
 import { MatTableDataSource } from '@angular/material';
@@ -59,16 +59,6 @@ export class MapComponent implements OnInit, OnDestroy {
       };
 
        this.view = new MapView(mapViewProperties);
-       const queryTask = {
-        url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
-      };
-
-       this.qTask = new QueryTask(queryTask);
-       const QueryFeature = {
-        returnGeometry: true,
-        outFields: ['*']
-      };
-       this.params = new Query(QueryFeature);
        const qTask = new QueryTask({
         url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
       });
@@ -119,8 +109,13 @@ export class MapComponent implements OnInit, OnDestroy {
           this.view.map.add(layer);
           graphicArray.length = 0;
           }
-         })
+
+        this.ELEMENT_DATA = ELEMENT_DATA;
+        this.FieldData = FieldData;
+
+      })
         .catch(this.promiseRejected);
+        // call
        const sharedServiceNew = this.sharedService;
        viewNew.on('click', (event) => {
         this.pointClick(event, viewNew, sharedServiceNew);
@@ -131,8 +126,8 @@ export class MapComponent implements OnInit, OnDestroy {
     }
    }
  getResults = (response: any) => {
-   for (const responseValue of response ) {
-      ELEMENT_DATA.push(response.fields.name);
+   for (const value of response.fields) {
+     ELEMENT_DATA.push(value.name);
        }
    response.features.forEach(value => {
 
@@ -167,41 +162,42 @@ export class MapComponent implements OnInit, OnDestroy {
 
      }
 
-    ngOnInit() {
+     pointObjData() {
+      this.sharedService.objData.subscribe(elementData => {
+        this.objData = elementData;
+        this.pointObjId.length = 0;
+        for (const objDataValue of elementData) {
+           this.pointObjId.push(objDataValue.OBJECTID);
+        }
+        const pointArr = this.pointObjId;
+        const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
 
-    this.initializeMap();
-    this.ELEMENT_DATA = ELEMENT_DATA;
-    this.FieldData = FieldData;
-    this.sharedService.objData.subscribe(elementData => {
-      this.objData = elementData;
-      this.pointObjId.length = 0;
-      for (const objDataValue of elementData) {
-         this.pointObjId.push(objDataValue.OBJECTID);
-      }
-      const pointArr = this.pointObjId;
-      const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
-      this.view.whenLayerView(propertyLayer).then((layerView) => {
+        this.view.whenLayerView(propertyLayer).then((layerView) => {
         const graphiclayer = layerView.layer;
         if (graphiclayer.graphics.length > 0) {
           const tempFeatures = graphiclayer.graphics.items;
-
           for (const tempFeaturesValue of tempFeatures) {
-            const objectIDs = tempFeatures.attributes.id;
+            const objectIDs = tempFeaturesValue.attributes.id;
             const result  = pointArr.indexOf(objectIDs);
             if ( result === -1) {
-            tempFeatures.visible = false;
+              tempFeaturesValue.visible = false;
             } else {
-              tempFeatures.visible = true;
+              tempFeaturesValue.visible = true;
 
             }
           }
         }
       });
-     }, error => {
-       console.log(error);
-     });
+    });
+
+  }
+ngOnInit() {
+
+      this.initializeMap();
+      this.pointObjData();
+
     }
-  ngOnDestroy() {
+ngOnDestroy() {
     if (this.view) {
       this.view.container = null;
     }
