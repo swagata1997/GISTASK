@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, ViewChild, AfterViewInit } from '@angular/core';
-import { MatPaginator, MatTableDataSource, MatSort, Sort, } from '@angular/material';
+import { MatPaginator, MatTableDataSource, MatSort } from '@angular/material';
 import { SharedService } from '../shared.service';
 
 @Component({
@@ -13,12 +13,11 @@ export class TableComponent implements OnInit, AfterViewInit {
 
   @ViewChild('paginatorPos', { static: true }) paginator: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort: MatSort;
-  @Input() ELEMENT_DATA: any[];
-  @Input() FieldData: any;
-  objectID: any;
-  objDatas: any[] = [];
+  @Input() headers: any[];
+  @Input() fieldData: any;
   @Input() pointData: any;
   @Input() pointObjectId: any;
+  objectID: any;
   SelectedRow: any;
   dataSource = new MatTableDataSource<any>();
 
@@ -42,16 +41,17 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     this.paginator.pageSize = 5;
     const skip = this.paginator.pageSize * pageIndexId;
-    const paged = this.FieldData.filter((u, i) => i >= skip)
-      .filter((u, i) => i < this.paginator.pageSize);
+    const paged = this.fieldData.filter((u: any, i: number) => i >= skip)
+      // tslint:disable-next-line:variable-name
+    .filter((u, i) => i < this.paginator.pageSize);
     this.sharedService.objData.next(paged);
      }
 
   ngOnInit() {
 
     this.SelectedRow = this.sharedService.SelectedRow;
-    this.sharedService.ELEMENT_DATA.subscribe(elementData => {
-      this.ELEMENT_DATA = elementData;
+    this.sharedService.headers.subscribe(elementData => {
+      this.headers = elementData;
     });
 
     this.sharedService.pointData.subscribe(filterData => {
@@ -63,22 +63,18 @@ export class TableComponent implements OnInit, AfterViewInit {
      });
 
 
-    this.sharedService.FieldData.subscribe(fieldData => {
-      this.FieldData = JSON.parse(JSON.stringify(fieldData));
-      this.dataSource = new MatTableDataSource(this.FieldData);
+    this.sharedService.fieldData.subscribe(fieldData => {
+      this.fieldData = fieldData ;
+      this.dataSource = new MatTableDataSource(this.fieldData);
       this.dataSource.paginator = this.paginator;
     });
-    this.FieldData = JSON.parse(JSON.stringify(this.FieldData));
+    this.fieldData = JSON.parse(JSON.stringify(this.fieldData));
 
    // Map Data
-    this.dataSource = new MatTableDataSource(this.FieldData);
-
-    setTimeout(() => {
-      this.paginator.pageIndex = 0;
-      this.paginator.pageSize = 5;
-      this.dataSource.paginator = this.paginator;
-    });
-
+    this.dataSource = new MatTableDataSource(this.fieldData);
+    this.paginator.pageIndex = 0;
+    this.paginator.pageSize = 5;
+    this.dataSource.paginator = this.paginator;
     this.pagedata('', this.paginator.pageIndex);
 }
 
