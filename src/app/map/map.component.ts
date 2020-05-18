@@ -10,8 +10,8 @@ export interface PeriodicElement {
   weight: number;
   symbol: string;
 }
-const ELEMENT_DATA: any[] = [];
-const FieldData: any[] = [];
+const headers: any[] = [];
+const fieldData: any[] = [];
 const graphicArray: any[] = [];
 
 @Component({
@@ -27,8 +27,8 @@ export class MapComponent implements OnInit, OnDestroy {
   layerId: string;
   params: any;
   qTask: any;
-  ELEMENT_DATA: any[] = [];
-  FieldData: any[] = [];
+  headers: any[] = [];
+  fieldData: any[] = [];
   pointObjectId: any;
   graphicArray: any[] = [];
   pointObjId: any[] = [];
@@ -70,10 +70,10 @@ export class MapComponent implements OnInit, OnDestroy {
        const viewNew = this.view;
        qTask.execute(params).then((response) => {
         this.getResults(response);
-        for ( const FieldDataValue of FieldData) {
-          const objId = FieldDataValue.OBJECTID;
-          const lat = FieldDataValue.MAP_LATITUDE;
-          const log = FieldDataValue.MAP_LONGITUDE;
+        for ( const fieldDataValue of fieldData) {
+          const objId = fieldDataValue.OBJECTID;
+          const lat = fieldDataValue.MAP_LATITUDE;
+          const log = fieldDataValue.MAP_LONGITUDE;
           const markerSymbol = {
            type: 'simple-marker',
            color: [226, 119, 40],
@@ -110,8 +110,8 @@ export class MapComponent implements OnInit, OnDestroy {
           graphicArray.length = 0;
           }
 
-        this.ELEMENT_DATA = ELEMENT_DATA;
-        this.FieldData = FieldData;
+        this.headers = headers;
+        this.fieldData = fieldData;
 
       })
         .catch(this.promiseRejected);
@@ -127,14 +127,14 @@ export class MapComponent implements OnInit, OnDestroy {
    }
  getResults = (response: any) => {
    for (const value of response.fields) {
-     ELEMENT_DATA.push(value.name);
+     headers.push(value.name);
        }
    response.features.forEach(value => {
 
-      FieldData.push(value.attributes);
+      fieldData.push(value.attributes);
       });
 
-   return { ELEMENT_DATA, FieldData};
+   return { headers, fieldData};
     }
     promiseRejected = (error) => {
       console.error('Promise rejected: ', error.message);
