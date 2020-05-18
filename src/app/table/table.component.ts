@@ -42,8 +42,7 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.paginator.pageSize = 5;
     const skip = this.paginator.pageSize * pageIndexId;
     const paged = this.fieldData.filter((u: any, i: number) => i >= skip)
-      // tslint:disable-next-line:variable-name
-    .filter((u, i) => i < this.paginator.pageSize);
+   .filter((u, i) => i < this.paginator.pageSize);
     this.sharedService.objData.next(paged);
      }
 
@@ -69,8 +68,6 @@ export class TableComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator = this.paginator;
     });
     this.fieldData = JSON.parse(JSON.stringify(this.fieldData));
-
-   // Map Data
     this.dataSource = new MatTableDataSource(this.fieldData);
     this.paginator.pageIndex = 0;
     this.paginator.pageSize = 5;
