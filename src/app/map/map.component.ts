@@ -13,7 +13,7 @@ export interface PeriodicElement {
 const headers: any[] = [];
 const fieldData: any[] = [];
 const graphicArray: any[] = [];
-
+let highlight: any;
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -70,7 +70,7 @@ export class MapComponent implements OnInit, OnDestroy {
        const viewNew = this.view;
        qTask.execute(params).then((response) => {
         this.getResults(response);
-        for ( const fieldDataValue of fieldData) {
+      /*  for ( const fieldDataValue of fieldData) {
           const objId = fieldDataValue.OBJECTID;
           const lat = fieldDataValue.MAP_LATITUDE;
           const log = fieldDataValue.MAP_LONGITUDE;
@@ -101,21 +101,21 @@ export class MapComponent implements OnInit, OnDestroy {
 
           });
           graphicArray.push(graphic);
-          const layer = new GraphicsLayer({
-            visible: true,
-           graphics: graphicArray,
-            id : 'properties'
-         });
-          this.view.map.add(layer);
-          graphicArray.length = 0;
-          }
-
+          }*/
+        const graphic = new Graphic();
+        this.graphicResult(graphic);
+        const layer = new GraphicsLayer({
+          visible: true,
+         graphics: graphicArray,
+          id : 'properties',
+          graphicData: graphicArray
+       });
+        this.view.map.add(layer);
         this.headers = headers;
         this.fieldData = fieldData;
 
       })
         .catch(this.promiseRejected);
-        // call
        const sharedServiceNew = this.sharedService;
        viewNew.on('click', (event) => {
         this.pointClick(event, viewNew, sharedServiceNew);
@@ -125,7 +125,7 @@ export class MapComponent implements OnInit, OnDestroy {
       console.log('EsriLoader: ', error);
     }
    }
- getResults = (response: any) => {
+ getResults(response: any) {
    for (const value of response.fields) {
      headers.push(value.name);
        }
@@ -140,8 +140,38 @@ export class MapComponent implements OnInit, OnDestroy {
       console.error('Promise rejected: ', error.message);
 
     }
+    graphicResult(graphic) {
+     for ( let i = 0; i <= fieldData.length; i++) {
+        const objId = fieldData[i].OBJECTID;
+        const lat = fieldData[i].MAP_LATITUDE;
+        const log = fieldData[i].MAP_LONGITUDE;
+        graphic.symbol = {
+         type: 'simple-marker',
+         color: [226, 119, 40],
+         outline: {
+           color: [255, 255, 255],
+           width: 2
+         }
+       };
+        graphic.geometry = {
+        type: 'point',
+        longitude: lat,
+        latitude: log
+      };
+        graphic.attributes = {
+           id :  fieldData[i].OBJECTID,
+           attrId : objId
+      };
+        let visibleStatus = true;
+        if ( this.pointObjId.indexOf(objId) === -1) {
+            visibleStatus = false;
+            graphic.visible = visibleStatus;
+      }
+        graphicArray.push(graphic);
+         graphic.attributes = undefined;
+    }
+}
     pointClick(event, viewNew , sharedServiceNew) {
-      let highlight: any;
       const screenPoint = {
       x : event.x,
       y : event.y
@@ -159,8 +189,7 @@ export class MapComponent implements OnInit, OnDestroy {
          sharedServiceNew.pointObjectId.next(obId);
        }
        });
-
-     }
+      }
 
      pointObjData() {
       this.sharedService.objData.subscribe(elementData => {
@@ -171,11 +200,10 @@ export class MapComponent implements OnInit, OnDestroy {
         }
         const pointArr = this.pointObjId;
         const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
-
         this.view.whenLayerView(propertyLayer).then((layerView) => {
         const graphiclayer = layerView.layer;
-        if (graphiclayer.graphics.length > 0) {
-          const tempFeatures = graphiclayer.graphics.items;
+        if (graphiclayer.graphicData.length > 0) {
+          const tempFeatures = graphiclayer.graphicData;
           for (const tempFeaturesValue of tempFeatures) {
             const objectIDs = tempFeaturesValue.attributes.id;
             const result  = pointArr.indexOf(objectIDs);
