@@ -29,22 +29,22 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.SelectedRow = row[val];
 
   }
-  isSorting(columnText: string): boolean {
-    return true;
-  }
+  /* isSorting(columnText: string): boolean {
+     return true;
+   }*/
 
-  pagedata = (event, pageIndex= 0) => {
+  pagedata = (event, pageIndex = 0) => {
     let pageIndexId = pageIndex;
     if (event !== '') {
       pageIndexId = event.pageIndex;
-     }
+    }
 
     this.paginator.pageSize = 5;
     const skip = this.paginator.pageSize * pageIndexId;
     const paged = this.fieldData.filter((u: any, i: number) => i >= skip)
-   .filter((u, i) => i < this.paginator.pageSize);
+      .filter((u, i) => i < this.paginator.pageSize);
     this.sharedService.objData.next(paged);
-     }
+  }
 
   ngOnInit() {
 
@@ -59,21 +59,21 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.sharedService.pointObjectId.subscribe(pointObId => {
       this.pointObjectId = pointObId;
       this.SelectedRow = pointObId;
-     });
+    });
 
 
     this.sharedService.fieldData.subscribe(fieldData => {
-      this.fieldData = fieldData ;
+      this.fieldData = fieldData;
       this.dataSource = new MatTableDataSource(this.fieldData);
       this.dataSource.paginator = this.paginator;
     });
-    this.fieldData = JSON.parse(JSON.stringify(this.fieldData));
+
     this.dataSource = new MatTableDataSource(this.fieldData);
     this.paginator.pageIndex = 0;
     this.paginator.pageSize = 5;
     this.dataSource.paginator = this.paginator;
     this.pagedata('', this.paginator.pageIndex);
-}
+  }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
