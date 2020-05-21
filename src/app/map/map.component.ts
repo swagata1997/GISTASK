@@ -71,46 +71,41 @@ export class MapComponent implements OnInit, OnDestroy {
       const viewNew = this.view;
       qTask.execute(params).then((response) => {
         this.getResults(response);
-        /*  for ( const fieldDataValue of fieldData) {
-            const objId = fieldDataValue.OBJECTID;
-            const lat = fieldDataValue.MAP_LATITUDE;
-            const log = fieldDataValue.MAP_LONGITUDE;
-            const markerSymbol = {
-             type: 'simple-marker',
-             color: [226, 119, 40],
-             outline: {
-               color: [255, 255, 255],
-               width: 2
-             }
-           };
-            const point = {
+        for (const fieldDataValue of fieldData) {
+          const objId = fieldDataValue.OBJECTID;
+          const lat = fieldDataValue.MAP_LATITUDE;
+          const log = fieldDataValue.MAP_LONGITUDE;
+          const markerSymbol = {
+            type: 'simple-marker',
+            color: [226, 119, 40],
+            outline: {
+              color: [255, 255, 255],
+              width: 2
+            }
+          };
+          const point = {
             type: 'point',
             longitude: lat,
             latitude: log
           };
-            const attributesData = {
-                id :  objId
+          const attributesData = {
+            id: objId
           };
-            let visibleStatus = true;
-            if ( this.pointObjId.indexOf(objId) === -1) {
-                visibleStatus = false;       }
-            const graphic = new Graphic({
-              visible: visibleStatus,
-               geometry : point,
-               symbol : markerSymbol,
-               attributes : attributesData
+          let visibleStatus = true;
+          if (this.pointObjId.indexOf(objId) === -1) {
+            visibleStatus = false;
+          }
+          const graphic = new Graphic({
+            visible: visibleStatus,
+            geometry: point,
+            symbol: markerSymbol,
+            attributes: attributesData
 
-            });
-            graphicArray.push(graphic);
-            }*/
-        const graArray = this.graphicResult();
-        console.log()
-        const layer = new GraphicsLayer({
-          visible: true,
-          graphics: graArray,
-          id: 'properties'
-        });
-        this.view.map.add(layer);
+          });
+          graphicArray.push(graphic);
+        }
+        this.graphicResult();
+
         this.headers = headers;
         this.fieldData = fieldData;
 
@@ -142,7 +137,8 @@ export class MapComponent implements OnInit, OnDestroy {
   }
   async graphicResult() {
     const arrGraphic = [];
-    const [Graphic] = await loadModules(['esri/Graphic']);
+    const [GraphicsLayer, Graphic, webMercatorUtils] =
+      await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic', 'esri/geometry/support/webMercatorUtils']);
     for (const fieldDataValue of fieldData) {
       this.objId = fieldDataValue.OBJECTID;
       this.lat = fieldDataValue.MAP_LATITUDE;
@@ -155,11 +151,11 @@ export class MapComponent implements OnInit, OnDestroy {
           width: 2
         }
       };
-      const point = {
+      const point = webMercatorUtils.geographicToWebMercator({
         type: 'point',
         longitude: this.lat,
         latitude: this.log
-      };
+      });
       const attributesData = {
         id: this.objId
       };
@@ -175,8 +171,12 @@ export class MapComponent implements OnInit, OnDestroy {
       });
       arrGraphic.push(graphic);
     }
-
-    return arrGraphic;
+    const layer = new GraphicsLayer({
+      visible: true,
+      graphics: arrGraphic,
+      id: 'properties'
+    });
+    this.view.map.add(layer);
   }
   pointClick(event, viewNew, sharedServiceNew) {
     const screenPoint = {
@@ -199,7 +199,6 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   pointObjData() {
-    console.log('ss');
     this.sharedService.objData.subscribe(elementData => {
       this.objData = elementData;
       this.pointObjId.length = 0;
@@ -210,19 +209,22 @@ export class MapComponent implements OnInit, OnDestroy {
       const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
       this.view.whenLayerView(propertyLayer).then((layerView) => {
         const graphiclayer = layerView.layer;
+        console.log(graphiclayer.graphics);
         if (graphiclayer.graphics.length > 0) {
           console.log(graphiclayer.graphics);
-          const tempFeatures = graphiclayer.graphics;
-          for (const tempFeaturesValue of tempFeatures) {
-            tempFeaturesValue.visible = true;
-            // const objectIDs = tempFeaturesValue.attributes.id;
-            // const result = pointArr.indexOf(objectIDs);
-            /* if (result === -1) {
-               tempFeaturesValue.visible = false;
-             } else {
-               tempFeaturesValue.visible = true;
- 
-             }*/
+          const tempFeatures = graphiclayer.graphics.items;
+          // tslint:disable-next-line: prefer-for-of
+          for (let i = 0; i < tempFeatures.length; i++) {
+            // tempFeaturesValue.visible = true;
+            console.log(graphiclayer.graphics.items);
+            const objectIDs = tempFeatures[i].attributes.id;
+            console.log(objectIDs);
+            const result = pointArr.indexOf(objectIDs);
+            if (result === -1) {
+              graphiclayer.graphics.items[i].visible = false;
+            } else {
+              graphiclayer.graphics.items[i].visible = true;
+            }
           }
         }
       });
@@ -232,7 +234,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ngOnInit() {
 
     this.initializeMap();
-    //  this.pointObjData();
+    this.pointObjData();
 
   }
   ngOnDestroy() {
@@ -241,4 +243,3 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 }
-
