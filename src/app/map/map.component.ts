@@ -131,7 +131,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
     return { headers, fieldData };
   }
-  promiseRejected = (error) => {
+  promiseRejected(error) {
     console.error('Promise rejected: ', error.message);
 
   }
@@ -213,17 +213,13 @@ export class MapComponent implements OnInit, OnDestroy {
         if (graphiclayer.graphics.length > 0) {
           console.log(graphiclayer.graphics);
           const tempFeatures = graphiclayer.graphics.items;
-          // tslint:disable-next-line: prefer-for-of
-          for (let i = 0; i < tempFeatures.length; i++) {
-            // tempFeaturesValue.visible = true;
-            console.log(graphiclayer.graphics.items);
+          for (let i = 0; i <= tempFeatures.length; i++) {
             const objectIDs = tempFeatures[i].attributes.id;
-            console.log(objectIDs);
             const result = pointArr.indexOf(objectIDs);
             if (result === -1) {
-              graphiclayer.graphics.items[i].visible = false;
+              tempFeatures[i].visible = false;
             } else {
-              graphiclayer.graphics.items[i].visible = true;
+              tempFeatures[i].visible = true;
             }
           }
         }
