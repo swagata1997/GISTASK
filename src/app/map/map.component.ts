@@ -58,64 +58,8 @@ export class MapComponent implements OnInit, OnDestroy {
         container: this.mapViewEl.nativeElement,
         map: this.map
       };
-
       this.view = new MapView(mapViewProperties);
-      const qTask = new QueryTask({
-        url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
-      });
-      const params = new Query({
-        returnGeometry: true,
-        outFields: ['*']
-      });
-      params.where = '1=1';
-      const viewNew = this.view;
-      qTask.execute(params).then((response) => {
-        this.getResults(response);
-        for (const fieldDataValue of fieldData) {
-          const objId = fieldDataValue.OBJECTID;
-          const lat = fieldDataValue.MAP_LATITUDE;
-          const log = fieldDataValue.MAP_LONGITUDE;
-          const markerSymbol = {
-            type: 'simple-marker',
-            color: [226, 119, 40],
-            outline: {
-              color: [255, 255, 255],
-              width: 2
-            }
-          };
-          const point = {
-            type: 'point',
-            longitude: lat,
-            latitude: log
-          };
-          const attributesData = {
-            id: objId
-          };
-          let visibleStatus = true;
-          if (this.pointObjId.indexOf(objId) === -1) {
-            visibleStatus = false;
-          }
-          const graphic = new Graphic({
-            visible: visibleStatus,
-            geometry: point,
-            symbol: markerSymbol,
-            attributes: attributesData
-
-          });
-          graphicArray.push(graphic);
-        }
-        this.graphicResult();
-
-        this.headers = headers;
-        this.fieldData = fieldData;
-
-      })
-        .catch(this.promiseRejected);
-      const sharedServiceNew = this.sharedService;
-      viewNew.on('click', (event) => {
-        this.pointClick(event, viewNew, sharedServiceNew);
-
-      });
+      this.queryResult();
     } catch (error) {
       console.log('EsriLoader: ', error);
     }
@@ -134,6 +78,37 @@ export class MapComponent implements OnInit, OnDestroy {
   promiseRejected(error) {
     console.error('Promise rejected: ', error.message);
 
+  }
+
+  async queryResult() {
+    const [Map, MapView, QueryTask, Query] = await loadModules(['esri/Map', 'esri/views/MapView', 'esri/tasks/QueryTask',
+    'esri/tasks/support/Query']);
+
+    const qTask = new QueryTask({
+      url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
+    });
+    const params = new Query({
+      returnGeometry: true,
+      outFields: ['*']
+    });
+    params.where = '1=1';
+    const viewNew = this.view;
+    qTask.execute(params).then((response) => {
+      this.getResults(response);
+
+      this.graphicResult();
+
+      this.headers = headers;
+      this.fieldData = fieldData;
+
+    })
+      .catch(this.promiseRejected);
+    const sharedServiceNew = this.sharedService;
+
+    viewNew.on('click', (event) => {
+      this.pointClick(event, viewNew, sharedServiceNew);
+
+    });
   }
   async graphicResult() {
     const arrGraphic = [];
@@ -209,11 +184,10 @@ export class MapComponent implements OnInit, OnDestroy {
       const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
       this.view.whenLayerView(propertyLayer).then((layerView) => {
         const graphiclayer = layerView.layer;
-        console.log(graphiclayer.graphics);
         if (graphiclayer.graphics.length > 0) {
-          console.log(graphiclayer.graphics);
           const tempFeatures = graphiclayer.graphics.items;
-          for (let i = 0; i <= tempFeatures.length; i++) {
+          const featureLen = tempFeatures.length - 1;
+          for (let i = 0; i < featureLen; i++) {
             const objectIDs = tempFeatures[i].attributes.id;
             const result = pointArr.indexOf(objectIDs);
             if (result === -1) {
