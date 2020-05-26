@@ -29,10 +29,6 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.SelectedRow = row[val];
 
   }
-  /* isSorting(columnText: string): boolean {
-     return true;
-   }*/
-
   pagedata = (event, pageIndex = 0) => {
     let pageIndexId = pageIndex;
     if (event !== '') {
@@ -41,9 +37,10 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     this.paginator.pageSize = 5;
     const skip = this.paginator.pageSize * pageIndexId;
-    const paged = this.fieldData.filter((u: any, i: number) => i >= skip)
-      .filter((u, i) => i < this.paginator.pageSize);
+    const paged = this.fieldData.filter((V: any , i: number) => i >= skip)
+      .filter(( V: any, i: number) =>   i < this.paginator.pageSize);
     this.sharedService.objData.next(paged);
+    return true;
   }
 
   ngOnInit() {
@@ -63,11 +60,8 @@ export class TableComponent implements OnInit, AfterViewInit {
 
 
     this.sharedService.fieldData.subscribe(fieldData => {
-      this.fieldData = fieldData;
-      this.dataSource = new MatTableDataSource(this.fieldData);
-      this.dataSource.paginator = this.paginator;
+    this.fieldData = fieldData;
     });
-
     this.dataSource = new MatTableDataSource(this.fieldData);
     this.paginator.pageIndex = 0;
     this.paginator.pageSize = 5;
