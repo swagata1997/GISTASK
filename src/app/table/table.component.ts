@@ -15,15 +15,15 @@ export class TableComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort, { static: true }) sort: MatSort;
   @Input() headers: any[];
   @Input() fieldData: any;
-  @Input() pointData: any;
+  @Input() pointData: any[] = [];
   @Input() pointObjectId: any;
   objectID: any;
   SelectedRow: any;
   dataSource = new MatTableDataSource<any>();
-
-
-  constructor(public sharedService: SharedService) { }
-  cellClicked(row) {
+  constructor(public sharedService: SharedService) {this.sharedService.pointData.subscribe(filterData => {
+    this.pointData = filterData;
+  }); }
+  cellClicked(row: any) {
     const val = 'OBJECTID';
     this.sharedService.objectID.next(row.OBJECTID);
     this.SelectedRow = row[val];
@@ -37,10 +37,8 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     this.paginator.pageSize = 5;
     const skip = this.paginator.pageSize * pageIndexId;
-    const paged = this.fieldData.filter((V: any , i: number) => i >= skip)
-      .filter(( V: any, i: number) =>   i < this.paginator.pageSize);
+    const paged = this.pointData .filter((u: any, i: number) => i >= skip);
     this.sharedService.objData.next(paged);
-    return true;
   }
 
   ngOnInit() {
@@ -50,18 +48,11 @@ export class TableComponent implements OnInit, AfterViewInit {
       this.headers = elementData;
     });
 
-    this.sharedService.pointData.subscribe(filterData => {
-      this.pointData = filterData;
-    });
     this.sharedService.pointObjectId.subscribe(pointObId => {
       this.pointObjectId = pointObId;
       this.SelectedRow = pointObId;
     });
 
-
-    this.sharedService.fieldData.subscribe(fieldData => {
-    this.fieldData = fieldData;
-    });
     this.dataSource = new MatTableDataSource(this.fieldData);
     this.paginator.pageIndex = 0;
     this.paginator.pageSize = 5;
