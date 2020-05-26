@@ -4,7 +4,9 @@ import {HttpClientModule} from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material';
 import { MatPaginatorModule } from '@angular/material';
-
+import { MatSortModule } from '@angular/material';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatIconModule, MatAutocompleteModule, MatChipsModule, MatFormFieldModule } from '@angular/material';
 import { AppComponent } from './app.component';
 import { MapComponent } from './map/map.component';
 import { TableComponent } from './table/table.component';
@@ -17,7 +19,9 @@ describe('AppComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       imports: [
-        RouterTestingModule, HttpClientModule, MatTableModule, MatInputModule, MatPaginatorModule
+       RouterTestingModule, HttpClientModule, MatTableModule, MatInputModule, MatPaginatorModule,
+        MatSortModule, FormsModule,  ReactiveFormsModule, MatIconModule, MatAutocompleteModule,
+        MatChipsModule, MatFormFieldModule
       ],
       declarations: [
         AppComponent, MapComponent, TableComponent
