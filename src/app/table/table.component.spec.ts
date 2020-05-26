@@ -2,6 +2,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TableComponent } from './table.component';
 import { MatTableModule } from '@angular/material/table';
+import { MatInputModule } from '@angular/material';
 import { SharedService } from '../shared.service';
 import {HttpClientModule} from '@angular/common/http';
 describe('TableComponent', () => {
@@ -12,7 +13,7 @@ describe('TableComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ TableComponent ],
       schemas: [NO_ERRORS_SCHEMA],
-      imports: [MatTableModule, HttpClientModule],
+      imports: [ MatTableModule, MatInputModule, HttpClientModule],
       providers: [SharedService]
      })
     .compileComponents();
