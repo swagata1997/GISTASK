@@ -12,8 +12,8 @@ export interface PeriodicElement {
 }
 const headers: any[] = [];
 const fieldData: any[] = [];
-const graphicArray: any[] = [];
 let highlight: any;
+
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -75,13 +75,13 @@ export class MapComponent implements OnInit, OnDestroy {
 
     return { headers, fieldData };
   }
-  promiseRejected(error) {
+  promiseRejected(error: any) {
     console.error('Promise rejected: ', error.message);
 
   }
 
   async queryResult() {
-    const [Map, MapView, QueryTask, Query] = await loadModules(['esri/Map', 'esri/views/MapView', 'esri/tasks/QueryTask',
+    const [ QueryTask, Query] = await loadModules([ 'esri/tasks/QueryTask',
     'esri/tasks/support/Query']);
 
     const qTask = new QueryTask({
@@ -93,7 +93,7 @@ export class MapComponent implements OnInit, OnDestroy {
     });
     params.where = '1=1';
     const viewNew = this.view;
-    qTask.execute(params).then((response) => {
+    qTask.execute(params).then((response: any) => {
       this.getResults(response);
 
       this.graphicResult();
@@ -105,7 +105,7 @@ export class MapComponent implements OnInit, OnDestroy {
       .catch(this.promiseRejected);
     const sharedServiceNew = this.sharedService;
 
-    viewNew.on('click', (event) => {
+    viewNew.on('click', (event: any) => {
       this.pointClick(event, viewNew, sharedServiceNew);
 
     });
@@ -153,16 +153,17 @@ export class MapComponent implements OnInit, OnDestroy {
     });
     this.view.map.add(layer);
   }
-  pointClick(event, viewNew, sharedServiceNew) {
+  pointClick(event: any, viewNew: any, sharedServiceNew: any) {
+
     const screenPoint = {
       x: event.x,
       y: event.y
     };
-    viewNew.hitTest(screenPoint).then((response) => {
+    viewNew.hitTest(screenPoint).then((response: any) => {
       if (response) {
         const graphicLayer = response.results[0].graphic.layer;
         const obId = response.results[0].graphic.attributes.id;
-        viewNew.whenLayerView(graphicLayer).then((layerView) => {
+        viewNew.whenLayerView(graphicLayer).then((layerView: any) => {
           if (highlight) {
             highlight.remove();
           }
@@ -181,8 +182,8 @@ export class MapComponent implements OnInit, OnDestroy {
         this.pointObjId.push(objDataValue.OBJECTID);
       }
       const pointArr = this.pointObjId;
-      const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
-      this.view.whenLayerView(propertyLayer).then((layerView) => {
+      const propertyLayer = this.view.map.layers.find((layer: any) => layer.id === 'properties');
+      this.view.whenLayerView(propertyLayer).then((layerView: any) => {
         const graphiclayer = layerView.layer;
         if (graphiclayer.graphics.length > 0) {
           const tempFeatures = graphiclayer.graphics.items;
@@ -213,3 +214,4 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 }
+
