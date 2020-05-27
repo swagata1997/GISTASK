@@ -12,8 +12,9 @@ export interface PeriodicElement {
 }
 const headers: any[] = [];
 const fieldData: any[] = [];
+const pointData: any[] = [];
+const graphicArray: any[] = [];
 let highlight: any;
-
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -29,6 +30,7 @@ export class MapComponent implements OnInit, OnDestroy {
   qTask: any;
   headers: any[] = [];
   fieldData: any[] = [];
+  pointData: any[] = [];
   pointObjectId: any;
   graphicArray: any[] = [];
   pointObjId: any[] = [];
@@ -58,8 +60,65 @@ export class MapComponent implements OnInit, OnDestroy {
         container: this.mapViewEl.nativeElement,
         map: this.map
       };
+
       this.view = new MapView(mapViewProperties);
-      this.queryResult();
+      const qTask = new QueryTask({
+        url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
+      });
+      const params = new Query({
+        returnGeometry: true,
+        outFields: ['*']
+      });
+      params.where = '1=1';
+      const viewNew = this.view;
+      qTask.execute(params).then((response) => {
+        this.getResults(response);
+        for (const fieldDataValue of fieldData) {
+          const objId = fieldDataValue.OBJECTID;
+          const lat = fieldDataValue.MAP_LATITUDE;
+          const log = fieldDataValue.MAP_LONGITUDE;
+          const markerSymbol = {
+            type: 'simple-marker',
+            color: [226, 119, 40],
+            outline: {
+              color: [255, 255, 255],
+              width: 2
+            }
+          };
+          const point = {
+            type: 'point',
+            longitude: lat,
+            latitude: log
+          };
+          const attributesData = {
+            id: objId
+          };
+          let visibleStatus = true;
+          if (this.pointObjId.indexOf(objId) === -1) {
+            visibleStatus = false;
+          }
+          const graphic = new Graphic({
+            visible: visibleStatus,
+            geometry: point,
+            symbol: markerSymbol,
+            attributes: attributesData
+
+          });
+          graphicArray.push(graphic);
+        }
+        this.graphicResult();
+
+        this.headers = headers;
+        this.fieldData = fieldData;
+        this.pointData = pointData;
+
+      })
+        .catch(this.promiseRejected);
+      const sharedServiceNew = this.sharedService;
+      viewNew.on('click', (event) => {
+        this.pointClick(event, viewNew, sharedServiceNew);
+
+      });
     } catch (error) {
       console.log('EsriLoader: ', error);
     }
@@ -71,44 +130,14 @@ export class MapComponent implements OnInit, OnDestroy {
     response.features.forEach(value => {
 
       fieldData.push(value.attributes);
+      pointData.push(value.attributes);
     });
 
-    return { headers, fieldData };
+    return { headers, fieldData , pointData };
   }
-  promiseRejected(error: any) {
+  promiseRejected(error) {
     console.error('Promise rejected: ', error.message);
 
-  }
-
-  async queryResult() {
-    const [ QueryTask, Query] = await loadModules([ 'esri/tasks/QueryTask',
-    'esri/tasks/support/Query']);
-
-    const qTask = new QueryTask({
-      url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
-    });
-    const params = new Query({
-      returnGeometry: true,
-      outFields: ['*']
-    });
-    params.where = '1=1';
-    const viewNew = this.view;
-    qTask.execute(params).then((response: any) => {
-      this.getResults(response);
-
-      this.graphicResult();
-
-      this.headers = headers;
-      this.fieldData = fieldData;
-
-    })
-      .catch(this.promiseRejected);
-    const sharedServiceNew = this.sharedService;
-
-    viewNew.on('click', (event: any) => {
-      this.pointClick(event, viewNew, sharedServiceNew);
-
-    });
   }
   async graphicResult() {
     const arrGraphic = [];
@@ -153,17 +182,16 @@ export class MapComponent implements OnInit, OnDestroy {
     });
     this.view.map.add(layer);
   }
-  pointClick(event: any, viewNew: any, sharedServiceNew: any) {
-
+  pointClick(event, viewNew, sharedServiceNew) {
     const screenPoint = {
       x: event.x,
       y: event.y
     };
-    viewNew.hitTest(screenPoint).then((response: any) => {
+    viewNew.hitTest(screenPoint).then((response) => {
       if (response) {
         const graphicLayer = response.results[0].graphic.layer;
         const obId = response.results[0].graphic.attributes.id;
-        viewNew.whenLayerView(graphicLayer).then((layerView: any) => {
+        viewNew.whenLayerView(graphicLayer).then((layerView) => {
           if (highlight) {
             highlight.remove();
           }
@@ -182,13 +210,14 @@ export class MapComponent implements OnInit, OnDestroy {
         this.pointObjId.push(objDataValue.OBJECTID);
       }
       const pointArr = this.pointObjId;
-      const propertyLayer = this.view.map.layers.find((layer: any) => layer.id === 'properties');
-      this.view.whenLayerView(propertyLayer).then((layerView: any) => {
+      const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+      this.view.whenLayerView(propertyLayer).then((layerView) => {
         const graphiclayer = layerView.layer;
+        console.log(graphiclayer.graphics);
         if (graphiclayer.graphics.length > 0) {
+          console.log(graphiclayer.graphics);
           const tempFeatures = graphiclayer.graphics.items;
-          const featureLen = tempFeatures.length - 1;
-          for (let i = 0; i < featureLen; i++) {
+          for (let i = 0; i <= tempFeatures.length; i++) {
             const objectIDs = tempFeatures[i].attributes.id;
             const result = pointArr.indexOf(objectIDs);
             if (result === -1) {
@@ -214,4 +243,3 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 }
-
