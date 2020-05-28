@@ -29,36 +29,33 @@ describe('MapComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-  it('should create instance of map', async () => {
-    const [Map, MapView] = await loadModules(['esri/Map', 'esri/views/MapView']);
-    const mapProperties = {
-      basemap: 'topo'
-    };
-    component.map = new Map(mapProperties);
-    const mapViewProperties = {
-     map: component.map
-    };
-    component.view = new MapView(mapViewProperties);
+  it('should create instance of map and view', async () => {
     component.initializeMap();
-    expect(component.map).toBe(mapProperties);
-    expect(component.view).toBe(mapViewProperties);
+    expect(component.map).toBeDefined();
+    expect(component.view).toBeDefined();
     });
-  it('should call getResults method', () => {
-  const response = new response();
-  const res = component.getResults(response);
-  expect(res).toBe(response);
-    });
-
-  it('should call queryResult method', async () => {
-    const [QueryTask, Query] = await loadModules(['esri/tasks/QueryTask', 'esri/tasks/support/Query',
-       'esri/Graphic', 'esri/layers/GraphicsLayer']);
-    const qtask = new  QueryTask({
-      url : 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
-    });
-    const params = new Query({
-      returnGeometry: true,
-    });
-    expect();
+  it('should get response from getResults method', async () => {
+    const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
+    const graphicArray = [];
+    const name = ['OBJECTID'];
+    const attributes = ['5325 HOADLEY ST'];
+    const graphic = new Graphic();
+    const obj = {features: graphic , fields: [{}] };
+    graphicArray.push(obj);
+    component.getResults(obj);
+    expect(component.headers).toBe(name);
+    expect(component.fieldData).toBe(attributes);
+   });
+  it('should call graphicResult', async () => {
+    const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
+    const arrGraphic = [];
+    const graphic = new Graphic();
+    component.graphicResult();
+    arrGraphic.push(graphic);
+    expect(component.view.map ).toBeDefined();
+  });
+  it('ngOnit call another function', () => {
+    component.ngOnInit();
   });
   afterAll(() => {
     TestBed.resetTestingModule();
