@@ -30,6 +30,7 @@ describe('MapComponent', () => {
     expect(component).toBeTruthy();
   });
   it('should create instance of map and view', async () => {
+    const [Map, MapView] = await loadModules(['esri/Map', 'esri/views/MapView']);
     component.initializeMap();
     expect(component.map).toBeDefined();
     expect(component.view).toBeDefined();
@@ -37,23 +38,25 @@ describe('MapComponent', () => {
   it('should get response from getResults method', async () => {
     const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
     const graphicArray = [];
-    const name = ['OBJECTID'];
-    const attributes = ['5325 HOADLEY ST'];
     const graphic = new Graphic();
-    const obj = {features: graphic , fields: [{}] };
-    graphicArray.push(obj);
-    component.getResults(obj);
-    expect(component.headers).toBe(name);
-    expect(component.fieldData).toBe(attributes);
+    graphicArray.push(graphic);
+    const graphicObj = {features: graphicArray, fields: [{name: 'OBJECTID'}, {name: 'CASE_NUM'}] };
+    component.getResults(graphicObj);
+  
+    // expect(component.headers).toEqual('OBJECTID');
+     /* graphicObj.features.forEach(value => {
+    // fieldData.push(value.attributes);
+     expect(component.fieldData).toBe(value.attributes);
+    });*/
    });
+
   it('should call graphicResult', async () => {
-    const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
-    const arrGraphic = [];
+    const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
+    const graphicArray = [];
     const graphic = new Graphic();
+    graphicArray.push(graphic);
     component.graphicResult();
-    arrGraphic.push(graphic);
-    expect(component.view.map ).toBeDefined();
-  });
+     });
   it('ngOnit call another function', () => {
     component.ngOnInit();
   });
