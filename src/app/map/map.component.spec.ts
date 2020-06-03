@@ -52,7 +52,7 @@ describe('MapComponent', () => {
       }
     };
     const attributesData = {
-      id: component.objId
+      id: 4
     };
     const graphic = new Graphic({
       geometry : point,
@@ -62,48 +62,106 @@ describe('MapComponent', () => {
     graphicArray.push(graphic);
     const graphicObj = {features: graphicArray, fields: [{name: 'OBJECTID'}] };
     component.getResults(graphicObj);
-    for (let i = 0; i <= graphicObj.fields.length; i++) {
-    expect( graphicObj.fields[i].name).toBe('OBJECTID');
+    for (const value of graphicObj.fields) {
+      expect(value.name).toBe('OBJECTID');
     }
     for (let i = 0; i <= graphicObj.features.length; i++) {
-      expect(graphicObj.features[i].objId).toBe(1);
+      expect(graphicObj.features.length).toBe(1);
      }
-     });
+    });
   it('should call graphicResult', async () => {
     const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
     const graphicArray = [];
-    // const graphic = new Graphic();
-   // graphicArray.push(graphic);
+    const fieldData = [
+    { ADDRESS: '5325 HOADLEY ST' , CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6, CENSUS_BLOCK: 1037,
+     CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
+     DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
+     FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R',
+     REVITE_HOC: null, REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325 ', }
+    ];
+    const graphic = new Graphic(
+      {
+       visible : true,
+       geometry: {
+        type: 'point',
+        longitude: -86.9322429999986 ,
+        latitude: 33.44588999999944
+       },
+      symbol: {
+        type: 'simple-marker',
+        color: [226, 119, 40],
+        outline: {
+          color: [255, 255, 255],
+          width: 2
+        }
+      },
+      attributes: {id: 1}
+    });
+    graphicArray.push(graphic);
+    const layer = new GraphicsLayer({
+      visible: true,
+      graphics: graphicArray ,
+      id: 'properties'
+    });
     component.graphicResult();
-    expect();
-     });
-  it('should call pointClick()' , async () => {
-    const [ Graphic] =  await loadModules([ 'esri/Graphic']);
-    const resultArray = [];
-    const  viewNew = component.view;
-   
-    spyOn(viewNew, 'on').and.callFake(() => {
-      component.pointClick(event, viewNew, sharedServiceNew);
-      expect(component.pointClick(event, viewNew, sharedServiceNew)).toHaveBeenCalled();
-    });
-    spyOn(viewNew, 'hitTest').and.callFake(() => {
-      });
-    expect(viewNew.hitTest()).toHaveBeenCalled();
-    const point = {
-      type: 'point',
-      longitude: -49.97,
-      latitude: 41.73
-    };
-    const attributesData = {
-      id: component.objId
-    };
-
+    component.view.map.add(layer);
+    for (const fieldDataValue of fieldData) {
+     expect(fieldDataValue.OBJECTID).toBe(1);
+     expect(fieldDataValue.MAP_LATITUDE).toBe(33.44589);
+     expect(fieldDataValue.MAP_LONGITUDE).toBe(-86.932243);
+    }
+   });
+  it('should get the response from pointClick()' , async () => {
+    const [ Graphic, GraphicsLayer, MapView] =  await loadModules(['esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/MapView']);
+    const graphicArray = [];
+    const results = [
+      {
+         mapPoint : {
+          spatialReference: {
+          latestWkid: 3857,
+          wkid: 102100,
+          },
+      x: 3483082.5048980042,
+      y: -21289852.61420796
+    },
+    visible : true
+      }];
+    const viewNew =  component.view = new MapView();
     const graphic = new Graphic({
-      geometry : point,
-      attributes : attributesData
+      attributes : {
+        id : 4
+      },
+      layer: {
+        id: 'properties'
+      },
+      geometry : {
+        latitude: -86.22630899999854,
+        longitude: 32.39540999999945,
+        type: 'point'
+      },
+      symbol : {
+        outline: {width: 2},
+         type: 'simple-marker'
+      },
     });
-
+    results.push(graphic);
+    const layer = new GraphicsLayer({
+      id : 'properties',
+      visible: true,
+     });
+    const response = {results, screenPoint: {x: 737, y: 193} };
+    spyOn(viewNew , 'hitTest').and.callFake(() => {
+      return Promise.resolve(response);
+      });
+    // component.pointClick();
+    expect(response.screenPoint.x).toBe(737);
+    expect(response.screenPoint.y).toBe(193);
+    // expect(response.results.graphic.layer).toBe(layer);
+   //  expect(response.results.graphic.attributes.id).toBe('properties');
   });
+  /*it('should call  pointObjData', () => {
+    spyOn(component.sharedService.objData, 'subscribe');
+  });*/
   it('ngOnit call another function', () => {
     component.ngOnInit();
   });
