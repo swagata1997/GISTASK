@@ -5,11 +5,11 @@ import { SharedService } from '../shared.service';
 import {HttpClientModule} from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { loadModules } from 'esri-loader';
+import { HttpClient } from '@angular/common/http';
 import { __classPrivateFieldSet } from 'tslib';
 describe('MapComponent', () => {
   let component: MapComponent;
   let fixture: ComponentFixture<MapComponent>;
-
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ MapComponent ],
@@ -145,10 +145,6 @@ describe('MapComponent', () => {
       },
     });
     results.push(graphic);
-    const layer = new GraphicsLayer({
-      id : 'properties',
-      visible: true,
-     });
     const response = {results, screenPoint: {x: 737, y: 193} };
     spyOn(viewNew , 'hitTest').and.callFake(() => {
       return Promise.resolve(response);
@@ -159,9 +155,66 @@ describe('MapComponent', () => {
     // expect(response.results.graphic.layer).toBe(layer);
    //  expect(response.results.graphic.attributes.id).toBe('properties');
   });
-  /*it('should call  pointObjData', () => {
+  it('should call  pointObjData', async () => {
+    const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
+    const elementData = [{ADDRESS: '5325 HOADLEY ST', CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6,
+    CENSUS_BLOCK: 1037, CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
+    DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
+    FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R', REVITE_HOC: null,
+    REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325'}];
+    const items = [];
+    const tempFeatures = [];
+    const pointArr = [1, 2, 3, 4, 5];
+    const result = -1;
+   // const sharedService = new SharedService(http);
+    const graphic = new Graphic({
+      attributes: {
+      id: 1
+      },
+      geometry: {
+        latitude: -86.9322429999986,
+        longitude: 33.44588999999944
+      },
+      symbol: {
+        type: 'simple-marker',
+        color: [226, 119, 40],
+        outline: {
+          color: [255, 255, 255],
+          width: 2
+        }
+      },
+      visible: true
+   });
+    items.push(graphic);
+    const layer = new GraphicsLayer({
+    visible: true,
+    graphics: items,
+    id: 'properties'
+  });
+    tempFeatures.push(layer.graphics.items);
+    component.pointObjData();
     spyOn(component.sharedService.objData, 'subscribe');
-  });*/
+    expect(component.objData).toBe(elementData);
+    // expect(component.objData).toBe(elementData);
+    for (const objDataValue of elementData) {
+      expect(objDataValue.OBJECTID).toBe(1);
+     }
+
+    if (layer.graphics.length > 0) {
+    expect(layer.graphics.length).toBe(1);
+    expect(layer.graphics.items).toBe(items);
+   }
+    for (const tempFeaturesValue of tempFeatures) {
+      const objectIDs = tempFeaturesValue.attributes.id;
+      expect(objectIDs).toBe(1);
+      expect(pointArr.indexOf(objectIDs)).toBe(1);
+    }
+   /* if (result === -1) {
+         expect( ).toBe(false);
+      } else {
+         expect( tempFeaturesValue.visible ).toBe(true);
+      }*/
+});
   it('ngOnit call another function', () => {
     component.ngOnInit();
   });
