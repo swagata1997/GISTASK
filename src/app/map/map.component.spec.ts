@@ -5,8 +5,8 @@ import { SharedService } from '../shared.service';
 import {HttpClientModule} from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { loadModules } from 'esri-loader';
-import { HttpClient } from '@angular/common/http';
 import { __classPrivateFieldSet } from 'tslib';
+
 describe('MapComponent', () => {
   let component: MapComponent;
   let fixture: ComponentFixture<MapComponent>;
@@ -65,10 +65,11 @@ describe('MapComponent', () => {
     for (const value of graphicObj.fields) {
       expect(value.name).toBe('OBJECTID');
     }
-    for (let i = 0; i <= graphicObj.features.length; i++) {
-      expect(graphicObj.features.length).toBe(1);
-     }
+    graphicObj.features.forEach(value => {
+      expect(value.attributes).toBe(attributesData);
     });
+    });
+    /*************************************GRAPHIC RESULT**************************************************************/
   it('should call graphicResult', async () => {
     const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
     const graphicArray = [];
@@ -111,9 +112,14 @@ describe('MapComponent', () => {
      expect(fieldDataValue.MAP_LONGITUDE).toBe(-86.932243);
     }
    });
+   /**************************************END GRAPHIC RESULT*************************************************************/
+   /************************************POINT CLICK*************************************************/
   it('should get the response from pointClick()' , async () => {
-    const [ Graphic, GraphicsLayer, MapView] =  await loadModules(['esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/MapView']);
+    const [ Graphic, GraphicsLayer, MapView, LayerView] =
+    await loadModules(['esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/MapView', 'esri/views/layers/LayerView']);
     const graphicArray = [];
+    const sharedServiceNew = component.sharedService;
+   // const event = new EventEmitter();
     const results = [
       {
          mapPoint : {
@@ -124,10 +130,7 @@ describe('MapComponent', () => {
       x: 3483082.5048980042,
       y: -21289852.61420796
     },
-    visible : true
-      }];
-    const viewNew =  component.view = new MapView();
-    const graphic = new Graphic({
+    graphic: {
       attributes : {
         id : 4
       },
@@ -143,30 +146,44 @@ describe('MapComponent', () => {
         outline: {width: 2},
          type: 'simple-marker'
       },
+    },
+    visible : true
+      }];
+    const viewNew =  component.view = new MapView();
+    const graphicLayer = new GraphicsLayer({
+      visible: true,
+      graphics: graphicArray ,
+      id: 'properties'
     });
-    results.push(graphic);
+    const layerView = new LayerView({
+      layer: graphicLayer,
+      visible: true
+    });
     const response = {results, screenPoint: {x: 737, y: 193} };
+    //component.pointClick(event, viewNew, sharedServiceNew);
     spyOn(viewNew , 'hitTest').and.callFake(() => {
       return Promise.resolve(response);
       });
-    // component.pointClick();
     expect(response.screenPoint.x).toBe(737);
     expect(response.screenPoint.y).toBe(193);
-    // expect(response.results.graphic.layer).toBe(layer);
-   //  expect(response.results.graphic.attributes.id).toBe('properties');
-  });
+    spyOn(viewNew, 'whenLayerView').and.callFake(() => {
+      return Promise.resolve(layerView);
+    });
+    spyOn(sharedServiceNew.pointObjectId, 'next');
+    expect(response.results[0].graphic.attributes.id).toBe(4);
+    });
   it('should call  pointObjData', async () => {
-    const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
+    const [ Graphic, GraphicsLayer,  LayerView] =
+    await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer','esri/views/layers/LayerView']);
     const elementData = [{ADDRESS: '5325 HOADLEY ST', CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6,
     CENSUS_BLOCK: 1037, CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
     DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
     FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R', REVITE_HOC: null,
     REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325'}];
     const items = [];
+    const layerResult = [];
     const tempFeatures = [];
-    const pointArr = [1, 2, 3, 4, 5];
     const result = -1;
-   // const sharedService = new SharedService(http);
     const graphic = new Graphic({
       attributes: {
       id: 1
@@ -186,34 +203,40 @@ describe('MapComponent', () => {
       visible: true
    });
     items.push(graphic);
-    const layer = new GraphicsLayer({
+    const graphicLayer = new GraphicsLayer({
     visible: true,
     graphics: items,
     id: 'properties'
   });
-    tempFeatures.push(layer.graphics.items);
+    const layerView = new LayerView({
+    layer: graphicLayer,
+    visible: true
+  });
+    tempFeatures.push(graphicLayer.graphics.items);
     component.pointObjData();
     spyOn(component.sharedService.objData, 'subscribe');
-    expect(component.objData).toBe(elementData);
-    // expect(component.objData).toBe(elementData);
+    expect(elementData).toBeDefined();
     for (const objDataValue of elementData) {
       expect(objDataValue.OBJECTID).toBe(1);
      }
-
-    if (layer.graphics.length > 0) {
-    expect(layer.graphics.length).toBe(1);
-    expect(layer.graphics.items).toBe(items);
+    spyOn (component.view.map.layers, 'find');
+    expect(graphicLayer.id).toEqual('properties');
+    spyOn(component.view, 'whenLayerView').and.callFake(() => {
+      return Promise.resolve(layerView);
+    });
+    expect(layerView.layer).toBe(graphicLayer);
+    if(graphicLayer.graphics.length > 0) {
+    expect(graphicLayer.graphics.length).toBe(1);
+    expect(graphicLayer.graphics.items).toEqual(items);
    }
     for (const tempFeaturesValue of tempFeatures) {
-      const objectIDs = tempFeaturesValue.attributes.id;
-      expect(objectIDs).toBe(1);
-      expect(pointArr.indexOf(objectIDs)).toBe(1);
-    }
-   /* if (result === -1) {
-         expect( ).toBe(false);
+     expect(tempFeaturesValue).toBeDefined();
+     if (result === -1) {
+         expect(tempFeaturesValue[0].visible ).toBe(true);
       } else {
-         expect( tempFeaturesValue.visible ).toBe(true);
-      }*/
+         expect(tempFeaturesValue[0].visible).toBe(false);
+      }
+      }
 });
   it('ngOnit call another function', () => {
     component.ngOnInit();
