@@ -7,9 +7,16 @@ import { MatTableModule } from '@angular/material/table';
 import { loadModules } from 'esri-loader';
 import { __classPrivateFieldSet } from 'tslib';
 
-describe('MapComponent', () => {
+describe('MapComponent', async () => {
   let component: MapComponent;
   let fixture: ComponentFixture<MapComponent>;
+  const fieldData = [
+    { ADDRESS: '5325 HOADLEY ST' , CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6, CENSUS_BLOCK: 1037,
+     CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
+     DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
+     FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R',
+     REVITE_HOC: null, REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325 ', }
+    ];
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ MapComponent ],
@@ -24,8 +31,8 @@ describe('MapComponent', () => {
     fixture = TestBed.createComponent(MapComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
 
+  });
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -36,14 +43,14 @@ describe('MapComponent', () => {
     expect(component.view).toBeDefined();
     });
   it('should get response from getResults method', async () => {
-    const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
-    const graphicArray = [];
-    const point = {
+   const [ Graphic] =  await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic']);
+   const graphicArray = [];
+   const point = {
       type: 'point',
       longitude: -49.97,
       latitude: 41.73
     };
-    const markerSymbol = {
+   const markerSymbol = {
       type: 'simple-marker',
       color: [226, 119, 40],
       outline: {
@@ -51,22 +58,22 @@ describe('MapComponent', () => {
         width: 2
       }
     };
-    const attributesData = {
+   const attributesData = {
       id: 4
     };
-    const graphic = new Graphic({
+   const graphic = new Graphic({
       geometry : point,
       symbol : markerSymbol,
       attributes: attributesData
     });
-    graphicArray.push(graphic);
-    const graphicObj = {features: graphicArray, fields: [{name: 'OBJECTID'}] };
-    component.getResults(graphicObj);
-    for (const value of graphicObj.fields) {
-      expect(graphicObj.fields.length).toBe(1);
+   graphicArray.push(graphic);
+   const response = {features: graphicArray, fields: [{name: 'OBJECTID'}] };
+   component.getResults(response);
+   for (const value of response.fields) {
+      expect(response.fields.length).toBe(1);
       expect(value.name).toBe('OBJECTID');
     }
-    graphicObj.features.forEach(value => {
+   response.features.forEach(value => {
       expect(value.attributes).toBe(attributesData);
     });
     });
@@ -74,13 +81,6 @@ describe('MapComponent', () => {
   it('should call graphicResult', async () => {
     const [ Graphic, GraphicsLayer] =  await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer']);
     const graphicArray = [];
-    const fieldData = [
-    { ADDRESS: '5325 HOADLEY ST' , CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6, CENSUS_BLOCK: 1037,
-     CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
-     DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
-     FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R',
-     REVITE_HOC: null, REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325 ', }
-    ];
     const graphic = new Graphic(
       {
        visible : true,
@@ -176,13 +176,8 @@ describe('MapComponent', () => {
   it('should call  pointObjData', async () => {
     const [ Graphic, GraphicsLayer,  LayerView] =
     await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/layers/LayerView']);
-    const elementData = [{ADDRESS: '5325 HOADLEY ST', CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6,
-    CENSUS_BLOCK: 1037, CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
-    DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
-    FIPS_STATE_CODE: 1, MAP_LATITUDE: 33.44589, MAP_LONGITUDE: -86.932243, OBJECTID: 1, OUT_GTLVL: 'R', REVITE_HOC: null,
-    REVITE_NAME: null, STATE_CODE: 'AL', STREET_NAME: 'HOADLEY ST', STREET_NUM: '5325'}];
+    const elementData = fieldData;
     const items = [];
-    const layerResult = [];
     const tempFeatures = [];
     const result = -1;
     const graphic = new Graphic({
@@ -221,7 +216,6 @@ describe('MapComponent', () => {
       expect(objDataValue.OBJECTID).toBe(1);
      }
     spyOn (component.view.map.layers, 'find');
-    expect(component.view.map.layers.find).toHaveBeenCalled();
     expect(graphicLayer.id).toEqual('properties');
     spyOn(component.view, 'whenLayerView').and.callFake(() => {
       return Promise.resolve(layerView);
@@ -240,14 +234,53 @@ describe('MapComponent', () => {
       }
       }
 });
-  it('get results from query result ()', () => {
-    
+  it('get results from query result ()', async () => {
+    const [ QueryTask, Query, Graphic] = await loadModules(['esri/tasks/QueryTask', 'esri/tasks/support/Query', 'esri/Graphic']);
+    const graphicResult = [];
+    const params = new Query({
+      returnGeometry: true,
+      outFields: ['*']
+    });
+    const qTask = new QueryTask({
+      url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
+    });
+    const graphicArray = [];
+    const point = {
+       type: 'point',
+       longitude: -49.97,
+       latitude: 41.73
+     };
+    const markerSymbol = {
+       type: 'simple-marker',
+       color: [226, 119, 40],
+       outline: {
+         color: [255, 255, 255],
+         width: 2
+       }
+     };
+    const attributesData = {
+       id: 4
+     };
+    const graphic = new Graphic({
+       geometry : point,
+       symbol : markerSymbol,
+       attributes: attributesData
+     });
+    graphicArray.push(graphic);
+    const response = {features: graphicArray, fields: [{name: 'OBJECTID'}] };
+    const sharedServiceNew = component.sharedService;
+    const headers = ['OBJECTID', 'CASE_NUM', 'CASE_STEP_NUMBER', 'STREET_NUM', 'DIRECTION_PREFIX'];
+    const event = new Event('click');
+    component.queryResult();
+    const viewNew = component.view;
+    spyOn(qTask, 'execute').and.callFake(() => {
+     return Promise.resolve(response);
+    });
+    expect(headers).toBe(headers);
+    expect(fieldData).toBe(fieldData);
+    component.pointClick(event, viewNew, sharedServiceNew);
   });
   it('ngOnit call another function', () => {
     component.ngOnInit();
   });
-  afterAll(() => {
-    TestBed.resetTestingModule();
-  });
-
 });
