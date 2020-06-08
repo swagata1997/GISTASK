@@ -63,6 +63,7 @@ describe('MapComponent', () => {
     const graphicObj = {features: graphicArray, fields: [{name: 'OBJECTID'}] };
     component.getResults(graphicObj);
     for (const value of graphicObj.fields) {
+      expect(graphicObj.fields.length).toBe(1);
       expect(value.name).toBe('OBJECTID');
     }
     graphicObj.features.forEach(value => {
@@ -119,7 +120,7 @@ describe('MapComponent', () => {
     await loadModules(['esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/MapView', 'esri/views/layers/LayerView']);
     const graphicArray = [];
     const sharedServiceNew = component.sharedService;
-   // const event = new EventEmitter();
+    const event = new Event('click');
     const results = [
       {
          mapPoint : {
@@ -149,7 +150,7 @@ describe('MapComponent', () => {
     },
     visible : true
       }];
-    const viewNew =  component.view = new MapView();
+    const viewNew =  component.view ;
     const graphicLayer = new GraphicsLayer({
       visible: true,
       graphics: graphicArray ,
@@ -160,7 +161,7 @@ describe('MapComponent', () => {
       visible: true
     });
     const response = {results, screenPoint: {x: 737, y: 193} };
-    //component.pointClick(event, viewNew, sharedServiceNew);
+    component.pointClick(event, viewNew, sharedServiceNew);
     spyOn(viewNew , 'hitTest').and.callFake(() => {
       return Promise.resolve(response);
       });
@@ -174,7 +175,7 @@ describe('MapComponent', () => {
     });
   it('should call  pointObjData', async () => {
     const [ Graphic, GraphicsLayer,  LayerView] =
-    await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer','esri/views/layers/LayerView']);
+    await loadModules([ 'esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/views/layers/LayerView']);
     const elementData = [{ADDRESS: '5325 HOADLEY ST', CASE_NUM: '011-301652', CASE_STEP_NUMBER: 6,
     CENSUS_BLOCK: 1037, CENSUS_TRACT: 136.01, CITY: 'BRIGHTON', CONGRESS_DISSTR: '07', DATE_ACQUIRED: 1452038400000,
     DATE_CLOSED: null, DATE_RECONCILED: null, DIRECTION_PREFIX: null, DISPLAY_ZIP_CODE: 35020, FIPS_PLACE_CODE: null,
@@ -220,17 +221,18 @@ describe('MapComponent', () => {
       expect(objDataValue.OBJECTID).toBe(1);
      }
     spyOn (component.view.map.layers, 'find');
+    expect(component.view.map.layers.find).toHaveBeenCalled();
     expect(graphicLayer.id).toEqual('properties');
     spyOn(component.view, 'whenLayerView').and.callFake(() => {
       return Promise.resolve(layerView);
     });
     expect(layerView.layer).toBe(graphicLayer);
-    if(graphicLayer.graphics.length > 0) {
+    if (graphicLayer.graphics.length > 0) {
     expect(graphicLayer.graphics.length).toBe(1);
     expect(graphicLayer.graphics.items).toEqual(items);
    }
     for (const tempFeaturesValue of tempFeatures) {
-     expect(tempFeaturesValue).toBeDefined();
+     expect(tempFeatures.length).toBeDefined(1);
      if (result === -1) {
          expect(tempFeaturesValue[0].visible ).toBe(true);
       } else {
@@ -238,6 +240,9 @@ describe('MapComponent', () => {
       }
       }
 });
+  it('get results from query result ()', () => {
+    
+  });
   it('ngOnit call another function', () => {
     component.ngOnInit();
   });
