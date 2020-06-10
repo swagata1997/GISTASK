@@ -2,6 +2,7 @@ import { Component, OnInit, Input, OnDestroy, ViewChild, ElementRef } from '@ang
 import { loadModules } from 'esri-loader';
 import { SharedService } from '../shared.service';
 import { MatTableDataSource } from '@angular/material';
+import { JsonPipe } from '@angular/common';
 
 
 export interface PeriodicElement {
@@ -30,13 +31,20 @@ export class MapComponent implements OnInit, OnDestroy {
   headers: any[] = [];
   fieldData: any[] = [];
   pointObjectId: any;
+  filterResult: any;
   graphicArray: any[] = [];
   pointObjId: any[] = [];
   objId: any;
+  filterObjId: any[] = [];
   lat: any;
   log: any;
+  filterValue: any;
+  filterName: any;
+  graphicRecordsArr: any[] = [];
   @Input() objectID: any[];
   @Input() objData: any[];
+  @Input() filteredData: any[];
+
   attributeName = [];
   constructor(public sharedService: SharedService) {
 
@@ -99,7 +107,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
       this.headers = headers;
       this.fieldData = fieldData;
-
+      return {headers, fieldData};
     })
       .catch(this.promiseRejected);
     const sharedServiceNew = this.sharedService;
@@ -111,8 +119,9 @@ export class MapComponent implements OnInit, OnDestroy {
   }
   async graphicResult() {
     const arrGraphic = [];
-    const [GraphicsLayer, Graphic, webMercatorUtils] =
-      await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic', 'esri/geometry/support/webMercatorUtils']);
+    const [GraphicsLayer, Graphic, webMercatorUtils, Popup, PopupTemplate] =
+      await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic', 'esri/geometry/support/webMercatorUtils' ,
+      'esri/widgets/Popup', 'esri/PopupTemplate']);
     for (const fieldDataValue of fieldData) {
       this.objId = fieldDataValue.OBJECTID;
       this.lat = fieldDataValue.MAP_LATITUDE;
@@ -141,17 +150,18 @@ export class MapComponent implements OnInit, OnDestroy {
         visible: true,
         geometry: point,
         symbol: markerSymbol,
-        attributes: attributesData
+        attributes: attributesData,
+
       });
       arrGraphic.push(graphic);
     }
     const layer = new GraphicsLayer({
       visible: true,
       graphics: arrGraphic,
-      id: 'properties'
-    });
+      id: 'properties',
+      });
     this.view.map.add(layer);
-  }
+    }
   pointClick(event, viewNew, sharedServiceNew) {
     const screenPoint = {
       x: event.x,
@@ -159,16 +169,19 @@ export class MapComponent implements OnInit, OnDestroy {
     };
     viewNew.hitTest(screenPoint).then((response) => {
       if (response) {
-        const graphicLayer = response.results[0].graphic.layer;
-        const obId = response.results[0].graphic.attributes.id;
-        viewNew.whenLayerView(graphicLayer).then((layerView) => {
-          if (highlight) {
+       const graphicLayer = response.results[0].graphic.layer;
+       const obId = response.results[0].graphic.attributes.id;
+       viewNew.whenLayerView(graphicLayer).then((layerView) => {
+           if (highlight) {
             highlight.remove();
           }
-          highlight = layerView.highlight(response.results[0].graphic);
+           highlight = layerView.highlight(response.results[0].graphic);
         });
-        sharedServiceNew.pointObjectId.next(obId);
+       sharedServiceNew.pointObjectId.next(obId);
+
       }
+
+
     });
   }
 
@@ -202,13 +215,69 @@ export class MapComponent implements OnInit, OnDestroy {
     });
 
   }
-  ngOnInit() {
+ filterData(event: Event) {
+    this.dataSource = new MatTableDataSource(this.fieldData);
+    const filterValue = (document.getElementById('textValue') as HTMLInputElement).value;
+    const textboxData = JSON.parse(filterValue);
+    this.sharedService.filterResult.next(textboxData);
+ }
+ pointRecords(filteredData) {
+  this.pointObjId.length = 0;
+  for (const filteredres of filteredData) {
+    this.pointObjId.push(filteredres.OBJECTID);
+  }
+  const filterArray = this.pointObjId;
+  const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+  this.view.whenLayerView(propertyLayer).then((layerView) => {
+    const graphiclayer = layerView.layer;
+    console.log(graphiclayer.graphics);
+    if (graphiclayer.graphics.length > 0) {
+      console.log(graphiclayer.graphics);
+      const filterFeatures = graphiclayer.graphics.items;
+      const filterValueLength = filterFeatures.length - 1;
+      for (let i = 0; i <= filterValueLength; i++) {
+        const objectIDs = filterFeatures[i].attributes.id;
+        const result = filterArray.indexOf(objectIDs);
+        if (result === -1) {
+          filterFeatures[i].visible = false;
+        } else {
+          filterFeatures[i].visible = true;
+        }
+      }
+    }
+  });
+ }
+ closeData() {
+  const str = (document.getElementById('textValue') as HTMLInputElement).value;
+  const filterArray = this.pointObjId;
+  const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+  if (str) {
+    const filterFeatures = propertyLayer.graphics.items;
+    const filterValueLength = filterFeatures.length - 1;
+    for (let i = 0; i <= filterValueLength; i++) {
+      const objectIDs = filterFeatures[i].attributes.id;
+      const result = filterArray.indexOf(objectIDs);
+      if (result === -1) {
+        filterFeatures[i].visible = true;
+      } else {
+        filterFeatures[i].visible = false;
+      }
+    }
+} else {
+
+  }
+}
+ngOnInit() {
 
     this.initializeMap();
     this.pointObjData();
 
+    this.sharedService.filterRecord.subscribe(filteredData => {
+      this.graphicRecordsArr = filteredData ;
+      this.pointRecords(filteredData);
+    });
   }
-  ngOnDestroy() {
+ngOnDestroy() {
     if (this.view) {
       this.view.container = null;
     }
