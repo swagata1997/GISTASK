@@ -1,14 +1,17 @@
 <div class="mat-elevation-z8" id="tableField">
-  <table mat-table [dataSource]="dataSource" id="display-table" matSort>
+  <table mat-table [dataSource]="dataSource" id="display-table" class="tableField" matSort>
 
     <ng-container matColumnDef="{{cols}}" *ngFor="let cols of headers" [matColumnDef]="cols">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header matSortStart="desc" [disabled]="isSorting(cols)"> {{cols}} </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header matSortStart="desc"> {{cols}}
+      </th>
       <td mat-cell *matCellDef="let element;">{{element[cols]}} </td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="headers"></tr>
-    <tr mat-row *matRowDef="let row;  columns:headers ;" (click)=" cellClicked(row) " [ngClass]="{highlight:SelectedRow == row.OBJECTID}"></tr>
+    <tr mat-row *matRowDef="let row;  columns:headers ;" (click)=" cellClicked(row) "
+      [ngClass]="{highlight:SelectedRow == row.OBJECTID}"></tr>
   </table>
-  <mat-paginator #paginatorPos [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" (page)="pageEvent = pagedata($event)" [showFirstLastButtons]="true">
+  <mat-paginator #paginatorPos [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" (page)="pageEvent = pagedata($event)"
+    [showFirstLastButtons]="true">
   </mat-paginator>
 </div>
