@@ -2,6 +2,7 @@ import { Component, OnInit, Input, ViewChild, AfterViewInit } from '@angular/cor
 import { MatPaginator, MatTableDataSource, MatSort } from '@angular/material';
 import { SharedService } from '../shared.service';
 
+
 @Component({
   selector: 'app-table-row',
   templateUrl: './table.component.html',
@@ -17,8 +18,12 @@ export class TableComponent implements OnInit, AfterViewInit {
   @Input() fieldData: any[] = [];
   @Input() pointData: any[] = [];
   @Input() pointObjectId: any;
+  @Input() filterResult: any;
   objectID: any;
   SelectedRow: any;
+  data: any;
+  clickData: any;
+  filterRecord: any;
   dataSource = new MatTableDataSource<any>();
 
 
@@ -29,11 +34,7 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.SelectedRow = row[val];
 
   }
-   /*isSorting(columnText: string): boolean {
-     return true;
-   }*/
-
-  pagedata = (event, pageIndex = 0) => {
+  pagedata(event, pageIndex = 0)  {
     let pageIndexId = pageIndex;
     if (event !== '') {
       pageIndexId = event.pageIndex;
@@ -45,6 +46,17 @@ export class TableComponent implements OnInit, AfterViewInit {
       .filter((u, i) => i < this.paginator.pageSize);
     this.sharedService.objData.next(paged);
   }
+  applyFilter(filterValue) {
+    this.dataSource = new MatTableDataSource(this.fieldData);
+    const filterValueData = JSON.stringify(filterValue);
+    this.dataSource.filter = filterValueData.trim().toLowerCase();
+    console.log(filterValue);
+    console.log(this.dataSource.filter);
+    const filteredData = this.dataSource.filteredData;
+    console.log(filteredData);
+    this.sharedService.filterRecord.next(filteredData);
+
+  }
 
   ngOnInit() {
 
@@ -53,12 +65,8 @@ export class TableComponent implements OnInit, AfterViewInit {
       this.headers = elementData;
     });
 
-    /*this.sharedService.pointData.subscribe(filterData => {
-      this.pointData = filterData;
-    });*/
     this.sharedService.pointObjectId.subscribe(pointObId => {
-      this.pointObjectId = pointObId;
-      this.SelectedRow = pointObId;
+    this.SelectedRow = pointObId;
     } , err => {console.log(err); });
 
 
@@ -74,9 +82,15 @@ export class TableComponent implements OnInit, AfterViewInit {
     this.paginator.pageSize = 5;
     this.dataSource.paginator = this.paginator;
     this.pagedata('', this.paginator.pageIndex);
+
+    this.sharedService.filterResult.subscribe(filterValue => {
+     this.clickData = filterValue;
+     this.applyFilter(filterValue);
+      } , err => {console.log(err); });
+
   }
 
-  ngAfterViewInit(): void {
+ ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
