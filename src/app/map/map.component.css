@@ -12,3 +12,18 @@
     background-color:white;
    
 }
+.zoom-in{
+    top:70px;
+    left:50px;
+    height:40px;
+    width:40px;
+    position:absolute;
+}
+.zoom-out{
+   margin:0;
+    top:120px;
+    left:50px;
+    height:40px;
+    width:40px;
+    position:absolute;
+}
