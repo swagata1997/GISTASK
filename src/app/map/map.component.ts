@@ -40,6 +40,9 @@ export class MapComponent implements OnInit, OnDestroy {
   log: any;
   filterValue: any;
   filterName: any;
+  filterResField: any;
+  featuresPoint: any[] = [];
+  newFieldValue: any[] = [];
   graphicRecordsArr: any[] = [];
   @Input() objectID: any[];
   @Input() objData: any[];
@@ -88,9 +91,9 @@ export class MapComponent implements OnInit, OnDestroy {
 
   }
   async queryResult() {
-    const [Map, MapView, QueryTask, Query] = await loadModules(['esri/Map', 'esri/views/MapView',
+    const [Map, MapView, QueryTask, Query, Popup] = await loadModules(['esri/Map', 'esri/views/MapView',
     'esri/tasks/QueryTask', 'esri/tasks/support/Query',
-       'esri/Graphic', 'esri/layers/GraphicsLayer']);
+       'esri/Graphic', 'esri/layers/GraphicsLayer', 'esri/widgets/Popup']);
     const qTask = new QueryTask({
       url: 'https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/HUD%20REO%20Properties/FeatureServer/0'
     });
@@ -113,12 +116,12 @@ export class MapComponent implements OnInit, OnDestroy {
     const sharedServiceNew = this.sharedService;
 
     viewNew.on('click', (event) => {
-      this.pointClick(event, viewNew, sharedServiceNew);
-
-    });
+          this.pointClick(event, viewNew, sharedServiceNew);
+       });
   }
   async graphicResult() {
     const arrGraphic = [];
+    const viewNew = this.view;
     const [GraphicsLayer, Graphic, webMercatorUtils, Popup, PopupTemplate] =
       await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic', 'esri/geometry/support/webMercatorUtils' ,
       'esri/widgets/Popup', 'esri/PopupTemplate']);
@@ -146,6 +149,8 @@ export class MapComponent implements OnInit, OnDestroy {
       if (this.pointObjId.indexOf(this.objId) === -1) {
         visibleStatus = false;
       }
+
+
       const graphic = new Graphic({
         visible: true,
         geometry: point,
@@ -153,37 +158,53 @@ export class MapComponent implements OnInit, OnDestroy {
         attributes: attributesData,
 
       });
+      this.view.popup.visible = true;
+      this.view.popup.features = graphic;
+
+     //  this.view.popup.features = arrGraphic;
+
       arrGraphic.push(graphic);
-    }
+      }
+
+
+
     const layer = new GraphicsLayer({
       visible: true,
       graphics: arrGraphic,
       id: 'properties',
-      });
+
+     });
+  //  layer.popupTemplate = popupTemplate;
     this.view.map.add(layer);
+
     }
-  pointClick(event, viewNew, sharedServiceNew) {
+   async pointClick(event, viewNew, sharedServiceNew) {
+    const [GraphicsLayer, Graphic, webMercatorUtils, Popup, PopupTemplate] =
+    await loadModules(['esri/layers/GraphicsLayer', 'esri/Graphic', 'esri/geometry/support/webMercatorUtils' ,
+    'esri/widgets/Popup', 'esri/PopupTemplate']);
     const screenPoint = {
-      x: event.x,
-      y: event.y
-    };
+        x: event.x,
+        y: event.y
+      };
     viewNew.hitTest(screenPoint).then((response) => {
-      if (response) {
-       const graphicLayer = response.results[0].graphic.layer;
-       const obId = response.results[0].graphic.attributes.id;
-       viewNew.whenLayerView(graphicLayer).then((layerView) => {
-           if (highlight) {
-            highlight.remove();
-          }
-           highlight = layerView.highlight(response.results[0].graphic);
-        });
-       sharedServiceNew.pointObjectId.next(obId);
-
-      }
+     if (response) {
+         const graphicLayer = response.results[0].graphic.layer;
+         const obId = response.results[0].graphic.attributes.id;
+         viewNew.whenLayerView(graphicLayer).then((layerView) => {
 
 
-    });
-  }
+          if (highlight) {
+              highlight.remove();
+            }
+          highlight = layerView.highlight(response.results[0].graphic);
+          });
+         sharedServiceNew.pointObjectId.next(obId);
+
+        }
+
+
+      });
+    }
 
   pointObjData() {
     this.sharedService.objData.subscribe(elementData => {
@@ -215,20 +236,20 @@ export class MapComponent implements OnInit, OnDestroy {
     });
 
   }
- filterData(event: Event) {
+filterData(event: Event) {
     this.dataSource = new MatTableDataSource(this.fieldData);
     const filterValue = (document.getElementById('textValue') as HTMLInputElement).value;
     const textboxData = JSON.parse(filterValue);
     this.sharedService.filterResult.next(textboxData);
  }
- pointRecords(filteredData) {
+pointRecords(filteredData) {
   this.pointObjId.length = 0;
   for (const filteredres of filteredData) {
     this.pointObjId.push(filteredres.OBJECTID);
   }
   const filterArray = this.pointObjId;
-  const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
-  this.view.whenLayerView(propertyLayer).then((layerView) => {
+  const filterLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+  this.view.whenLayerView(filterLayer).then((layerView) => {
     const graphiclayer = layerView.layer;
     console.log(graphiclayer.graphics);
     if (graphiclayer.graphics.length > 0) {
@@ -247,26 +268,35 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   });
  }
- closeData() {
+closeData() {
   const str = (document.getElementById('textValue') as HTMLInputElement).value;
   const filterArray = this.pointObjId;
+  // const fieldDataRes = this.fieldData;
   const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
   if (str) {
     const filterFeatures = propertyLayer.graphics.items;
     const filterValueLength = filterFeatures.length - 1;
     for (let i = 0; i <= filterValueLength; i++) {
-      const objectIDs = filterFeatures[i].attributes.id;
-      const result = filterArray.indexOf(objectIDs);
-      if (result === -1) {
-        filterFeatures[i].visible = true;
-      } else {
-        filterFeatures[i].visible = false;
+    filterFeatures[i].visible = true;
       }
     }
-} else {
 
-  }
+  this.sharedService.filterResField.next();
+
 }
+zoomIn(event) {
+this.view.goTo({
+      center: this.view.center,
+      zoom: this.view.zoom + 1
+    });
+ }
+zoomOut(event) {
+  this.view.goTo({
+    center: this.view.center,
+    zoom: this.view.zoom - 1
+  });
+ }
+
 ngOnInit() {
 
     this.initializeMap();
@@ -278,7 +308,7 @@ ngOnInit() {
     });
   }
 ngOnDestroy() {
-    if (this.view) {
+    if (this.view) { } {
       this.view.container = null;
     }
   }
