@@ -249,6 +249,7 @@ pointRecords(filteredData) {
   }
   const filterArray = this.pointObjId;
   const filterLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+
   this.view.whenLayerView(filterLayer).then((layerView) => {
     const graphiclayer = layerView.layer;
     console.log(graphiclayer.graphics);
@@ -265,24 +266,27 @@ pointRecords(filteredData) {
           filterFeatures[i].visible = true;
         }
       }
+
     }
   });
  }
 closeData() {
   const str = (document.getElementById('textValue') as HTMLInputElement).value;
-  const filterArray = this.pointObjId;
-  // const fieldDataRes = this.fieldData;
+  const fieldDataRes = this.fieldData;
   const propertyLayer = this.view.map.layers.find((layer) => layer.id === 'properties');
+  this.view.whenLayerView(propertyLayer).then((layerView) => {
   if (str) {
     const filterFeatures = propertyLayer.graphics.items;
     const filterValueLength = filterFeatures.length - 1;
     for (let i = 0; i <= filterValueLength; i++) {
     filterFeatures[i].visible = true;
       }
+    this.dataSource = new MatTableDataSource(this.fieldData);
+    this.sharedService.filterResField.next(fieldDataRes);
     }
 
-  this.sharedService.filterResField.next();
 
+  });
 }
 zoomIn(event) {
 this.view.goTo({
